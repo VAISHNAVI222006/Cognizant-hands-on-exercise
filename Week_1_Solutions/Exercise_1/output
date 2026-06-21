@@ -1,0 +1,11 @@
+Added: Product{ID=101, Name='Laptop', Qty=10, Price=75000.0}
+Added: Product{ID=102, Name='Mouse', Qty=50, Price=500.0}
+Added: Product{ID=103, Name='Keyboard', Qty=30, Price=1500.0}
+Updated: Product{ID=102, Name='Mouse', Qty=60, Price=450.0}
+Deleted: Product{ID=103, Name='Keyboard', Qty=30, Price=1500.0}
+
+Search for 101: Product{ID=101, Name='Laptop', Qty=10, Price=75000.0}
+
+All Products:
+Product{ID=101, Name='Laptop', Qty=10, Price=75000.0}
+Product{ID=102, Name='Mouse', Qty=60, Price=450.0}
