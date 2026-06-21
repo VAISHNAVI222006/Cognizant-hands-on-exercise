@@ -1,0 +1,11 @@
+Initial Investment: ₹100000.0
+Annual Rate: 8.0%
+Years: 10
+
+Recursive Result: ₹215892.50
+Time taken: 1200 ns
+
+Iterative Result: ₹215892.50
+Time taken: 500 ns
+
+Memoization Result: ₹215892.50
