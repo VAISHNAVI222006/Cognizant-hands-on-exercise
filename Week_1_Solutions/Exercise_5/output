@@ -1,0 +1,17 @@
+Added: Task{ID=101, Name='Design UI', Status='Pending'}
+Added: Task{ID=102, Name='Implement Login', Status='In Progress'}
+Added: Task{ID=103, Name='Write Tests', Status='Pending'}
+
+--- All Tasks ---
+Task{ID=101, Name='Design UI', Status='Pending'}
+Task{ID=102, Name='Implement Login', Status='In Progress'}
+Task{ID=103, Name='Write Tests', Status='Pending'}
+
+Search for 102: Task{ID=102, Name='Implement Login', Status='In Progress'}
+
+Deleted task: 102
+
+After Deletion:
+--- All Tasks ---
+Task{ID=101, Name='Design UI', Status='Pending'}
+Task{ID=103, Name='Write Tests', Status='Pending'}

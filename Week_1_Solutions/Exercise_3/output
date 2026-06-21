@@ -1,0 +1,11 @@
+Bubble Sort Result:
+Order{ID=103, Customer='Amit', Total=₹3000.0}
+Order{ID=101, Customer='Rahul', Total=₹5000.0}
+Order{ID=104, Customer='Sneha', Total=₹12000.0}
+Order{ID=102, Customer='Priya', Total=₹15000.0}
+
+Quick Sort Result:
+Order{ID=103, Customer='Amit', Total=₹3000.0}
+Order{ID=101, Customer='Rahul', Total=₹5000.0}
+Order{ID=104, Customer='Sneha', Total=₹12000.0}
+Order{ID=102, Customer='Priya', Total=₹15000.0}

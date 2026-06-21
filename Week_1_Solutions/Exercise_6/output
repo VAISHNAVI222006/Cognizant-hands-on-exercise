@@ -1,0 +1,12 @@
+Linear Search - '1984': Book{ID=101, Title='1984', Author='Orwell'}
+Linear Search - 'Unknown': null
+
+Sorted Books:
+Book{ID=101, Title='1984', Author='Orwell'}
+Book{ID=103, Title='Pride and Prejudice', Author='Austen'}
+Book{ID=104, Title='The Catcher in the Rye', Author='Salinger'}
+Book{ID=102, Title='The Great Gatsby', Author='Fitzgerald'}
+Book{ID=105, Title='To Kill a Mockingbird', Author='Lee'}
+
+Binary Search - 'Pride and Prejudice': Book{ID=103, Title='Pride and Prejudice', Author='Austen'}
+Binary Search - 'Unknown': null

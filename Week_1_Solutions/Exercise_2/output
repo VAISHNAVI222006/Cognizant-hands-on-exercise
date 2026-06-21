@@ -1,0 +1,7 @@
+Linear Search (unsorted) - ID 102: Product{ID=102, Name='Keyboard', Category='Electronics'}
+Linear Search (unsorted) - ID 999: null
+
+Sorted products: [Product{ID=101, Name='Mouse', Category='Electronics'}, Product{ID=102, Name='Keyboard', Category='Electronics'}, Product{ID=103, Name='Laptop', Category='Electronics'}, Product{ID=104, Name='Phone', Category='Electronics'}, Product{ID=105, Name='Book', Category='Education'}]
+
+Binary Search (sorted) - ID 104: Product{ID=104, Name='Phone', Category='Electronics'}
+Binary Search (sorted) - ID 999: null
