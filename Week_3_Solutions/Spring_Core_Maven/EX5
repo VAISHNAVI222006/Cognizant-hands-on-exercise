@@ -1,0 +1,81 @@
+// ==============================
+// FILE: applicationContext.xml
+// ==============================
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <bean id="bookRepository"
+          class="com.library.repository.BookRepository"/>
+
+    <bean id="bookService"
+          class="com.library.service.BookService">
+
+        <!-- Setter Injection -->
+        <property name="bookRepository" ref="bookRepository"/>
+
+    </bean>
+
+</beans>
+
+
+// ==============================
+// FILE: BookRepository.java
+// ==============================
+
+package com.library.repository;
+
+public class BookRepository {
+
+    public void displayBook() {
+        System.out.println("Book data fetched successfully");
+    }
+}
+
+
+// ==============================
+// FILE: BookService.java
+// ==============================
+
+package com.library.service;
+
+import com.library.repository.BookRepository;
+
+public class BookService {
+
+    private BookRepository bookRepository;
+
+    // Setter Injection Method
+    public void setBookRepository(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
+    public void serviceMethod() {
+        bookRepository.displayBook();
+    }
+}
+
+
+// ==============================
+// FILE: LibraryManagementApplication.java
+// ==============================
+
+package com.library;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import com.library.service.BookService;
+
+public class LibraryManagementApplication {
+
+    public static void main(String[] args) {
+
+        ApplicationContext context =
+                new ClassPathXmlApplicationContext("applicationContext.xml");
+
+        BookService service =
+                (BookService) context.getBean("bookService");
+
+        service.serviceMethod();
+    }
+}
