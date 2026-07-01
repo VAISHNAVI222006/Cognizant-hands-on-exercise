@@ -1,0 +1,296 @@
+// ==========================================
+// FILE: Employee.java
+// PACKAGE: com.cognizant.ormlearn.model
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import java.util.Set;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="employee")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="em_id")
+    private int id;
+
+    @Column(name="em_name")
+    private String name;
+
+    @Column(name="em_salary")
+    private double salary;
+
+    @Column(name="em_permanent")
+    private boolean permanent;
+
+    @ManyToOne
+    @JoinColumn(name="em_dp_id")
+    private Department department;
+
+    @ManyToMany(fetch=FetchType.LAZY)
+    @JoinTable(
+        name="employee_skill",
+        joinColumns=@JoinColumn(name="es_em_id"),
+        inverseJoinColumns=@JoinColumn(name="es_sk_id")
+    )
+    private Set<Skill> skillList;
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public double getSalary() { return salary; }
+    public boolean isPermanent() { return permanent; }
+    public Department getDepartment() { return department; }
+    public Set<Skill> getSkillList() { return skillList; }
+}
+
+
+// ==========================================
+// FILE: Department.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="department")
+public class Department {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="dp_id")
+    private int id;
+
+    @Column(name="dp_name")
+    private String name;
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+}
+
+
+// ==========================================
+// FILE: Skill.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="skill")
+public class Skill {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="sk_id")
+    private int id;
+
+    @Column(name="sk_name")
+    private String name;
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+}
+
+
+// ==========================================
+// FILE: EmployeeRepository.java
+// ==========================================
+
+package com.cognizant.ormlearn.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+
+import com.cognizant.ormlearn.model.Employee;
+
+public interface EmployeeRepository extends JpaRepository<Employee,Integer> {
+
+    // Hands-on 2: Get all permanent employees using HQL
+    @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.department " +
+           "LEFT JOIN FETCH e.skillList WHERE e.permanent = true")
+    List<Employee> getAllPermanentEmployees();
+
+    // Hands-on 4: Average salary by department
+    @Query("SELECT AVG(e.salary) FROM Employee e WHERE e.department.id = :id")
+    double getAverageSalary(@Param("id") int id);
+
+    // Hands-on 5: Native Query
+    @Query(value="SELECT * FROM employee", nativeQuery=true)
+    List<Employee> getAllEmployeesNative();
+}
+
+
+// ==========================================
+// FILE: EmployeeService.java
+// ==========================================
+
+package com.cognizant.ormlearn.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cognizant.ormlearn.model.Employee;
+import com.cognizant.ormlearn.repository.EmployeeRepository;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    // HQL Query
+    @Transactional
+    public List<Employee> getAllPermanentEmployees() {
+        return employeeRepository.getAllPermanentEmployees();
+    }
+
+    // Aggregate Query
+    @Transactional
+    public double getAverageSalary(int deptId) {
+        return employeeRepository.getAverageSalary(deptId);
+    }
+
+    // Native Query
+    @Transactional
+    public List<Employee> getAllEmployeesNative() {
+        return employeeRepository.getAllEmployeesNative();
+    }
+}
+
+
+// ==========================================
+// FILE: Product.java
+// (For Criteria Query Example)
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="product")
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private int id;
+
+    private String name;
+    private String ram;
+    private String os;
+    private double price;
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getRam() { return ram; }
+    public String getOs() { return os; }
+    public double getPrice() { return price; }
+}
+
+
+// ==========================================
+// FILE: ProductService.java
+// Hands-on 6 Criteria Query
+// ==========================================
+
+package com.cognizant.ormlearn.service;
+
+import java.util.List;
+
+import jakarta.persistence.*;
+import jakarta.persistence.criteria.*;
+
+import org.springframework.stereotype.Service;
+import com.cognizant.ormlearn.model.Product;
+
+@Service
+public class ProductService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public List<Product> searchProducts(String ram, String os) {
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Product> cq = cb.createQuery(Product.class);
+
+        Root<Product> product = cq.from(Product.class);
+
+        Predicate ramCondition = cb.equal(product.get("ram"), ram);
+        Predicate osCondition = cb.equal(product.get("os"), os);
+
+        cq.select(product)
+          .where(cb.and(ramCondition, osCondition));
+
+        TypedQuery<Product> query = entityManager.createQuery(cq);
+
+        return query.getResultList();
+    }
+}
+
+
+// ==========================================
+// FILE: OrmLearnApplication.java
+// ==========================================
+
+package com.cognizant.ormlearn;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import com.cognizant.ormlearn.model.Employee;
+import com.cognizant.ormlearn.model.Product;
+import com.cognizant.ormlearn.service.EmployeeService;
+import com.cognizant.ormlearn.service.ProductService;
+
+@SpringBootApplication
+public class OrmLearnApplication {
+
+    @Autowired
+    private static EmployeeService employeeService;
+
+    @Autowired
+    private static ProductService productService;
+
+    public static void main(String[] args) {
+
+        var context = SpringApplication.run(
+                OrmLearnApplication.class, args);
+
+        employeeService = context.getBean(EmployeeService.class);
+        productService = context.getBean(ProductService.class);
+
+        // Hands-on 2
+        System.out.println("Permanent Employees:");
+        List<Employee> employees =
+                employeeService.getAllPermanentEmployees();
+        System.out.println(employees);
+
+        // Hands-on 4
+        System.out.println("Average Salary:");
+        System.out.println(employeeService.getAverageSalary(1));
+
+        // Hands-on 5
+        System.out.println("Native Query:");
+        System.out.println(employeeService.getAllEmployeesNative());
+
+        // Hands-on 6
+        System.out.println("Criteria Query:");
+        List<Product> products =
+                productService.searchProducts("8GB", "Windows");
+        System.out.println(products);
+    }
+}
