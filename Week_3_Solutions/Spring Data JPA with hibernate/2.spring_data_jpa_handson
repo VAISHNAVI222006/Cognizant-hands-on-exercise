@@ -1,0 +1,381 @@
+// ==========================================
+// FILE: Country.java
+// PACKAGE: com.cognizant.ormlearn.model
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="country")
+public class Country {
+
+    @Id
+    @Column(name="co_code")
+    private String code;
+
+    @Column(name="co_name")
+    private String name;
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String toString() {
+        return code + " " + name;
+    }
+}
+
+
+// ==========================================
+// FILE: CountryRepository.java
+// ==========================================
+
+package com.cognizant.ormlearn.repository;
+
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.cognizant.ormlearn.model.Country;
+
+public interface CountryRepository extends JpaRepository<Country,String> {
+
+    // contains text
+    List<Country> findByNameContaining(String text);
+
+    // contains text ascending
+    List<Country> findByNameContainingOrderByNameAsc(String text);
+
+    // starts with
+    List<Country> findByNameStartingWith(String alphabet);
+}
+
+
+// ==========================================
+// FILE: Stock.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import java.util.Date;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="stock")
+public class Stock {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="st_id")
+    private int id;
+
+    @Column(name="st_code")
+    private String code;
+
+    @Column(name="st_date")
+    private Date date;
+
+    @Column(name="st_open")
+    private double open;
+
+    @Column(name="st_close")
+    private double close;
+
+    @Column(name="st_volume")
+    private long volume;
+
+    // getters setters
+}
+
+
+// ==========================================
+// FILE: StockRepository.java
+// ==========================================
+
+package com.cognizant.ormlearn.repository;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.cognizant.ormlearn.model.Stock;
+
+public interface StockRepository extends JpaRepository<Stock,Integer> {
+
+    // Facebook September 2019
+    List<Stock> findByCodeAndDateBetween(
+            String code, Date start, Date end);
+
+    // Google stock > 1250
+    List<Stock> findByCodeAndCloseGreaterThan(
+            String code,double price);
+
+    // Top 3 volume
+    List<Stock> findTop3ByOrderByVolumeDesc();
+
+    // Netflix lowest
+    List<Stock> findTop3ByCodeOrderByCloseAsc(String code);
+}
+
+
+// ==========================================
+// FILE: Department.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import java.util.Set;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="department")
+public class Department {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="dp_id")
+    private int id;
+
+    @Column(name="dp_name")
+    private String name;
+
+    @OneToMany(mappedBy="department", fetch=FetchType.EAGER)
+    private Set<Employee> employeeList;
+
+    // getters setters
+}
+
+
+// ==========================================
+// FILE: Skill.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import java.util.Set;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="skill")
+public class Skill {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="sk_id")
+    private int id;
+
+    @Column(name="sk_name")
+    private String name;
+
+    @ManyToMany(mappedBy="skillList")
+    private Set<Employee> employeeList;
+
+    // getters setters
+}
+
+
+// ==========================================
+// FILE: Employee.java
+// ==========================================
+
+package com.cognizant.ormlearn.model;
+
+import java.util.Date;
+import java.util.Set;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="employee")
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="em_id")
+    private int id;
+
+    @Column(name="em_name")
+    private String name;
+
+    @Column(name="em_salary")
+    private double salary;
+
+    @Column(name="em_permanent")
+    private boolean permanent;
+
+    @Column(name="em_date_of_birth")
+    private Date dateOfBirth;
+
+    // Many to One
+    @ManyToOne
+    @JoinColumn(name="em_dp_id")
+    private Department department;
+
+    // Many to Many
+    @ManyToMany(fetch=FetchType.EAGER)
+    @JoinTable(
+        name="employee_skill",
+        joinColumns=@JoinColumn(name="es_em_id"),
+        inverseJoinColumns=@JoinColumn(name="es_sk_id")
+    )
+    private Set<Skill> skillList;
+
+    // getters setters
+}
+
+
+// ==========================================
+// FILE: Repositories
+// ==========================================
+
+package com.cognizant.ormlearn.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.cognizant.ormlearn.model.Employee;
+
+public interface EmployeeRepository
+        extends JpaRepository<Employee,Integer> {
+}
+
+package com.cognizant.ormlearn.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.cognizant.ormlearn.model.Department;
+
+public interface DepartmentRepository
+        extends JpaRepository<Department,Integer> {
+}
+
+package com.cognizant.ormlearn.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.cognizant.ormlearn.model.Skill;
+
+public interface SkillRepository
+        extends JpaRepository<Skill,Integer> {
+}
+
+
+// ==========================================
+// FILE: Services
+// ==========================================
+
+package com.cognizant.ormlearn.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cognizant.ormlearn.model.Employee;
+import com.cognizant.ormlearn.repository.EmployeeRepository;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Transactional
+    public Employee get(int id){
+        return employeeRepository.findById(id).get();
+    }
+
+    @Transactional
+    public void save(Employee employee){
+        employeeRepository.save(employee);
+    }
+}
+
+package com.cognizant.ormlearn.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.cognizant.ormlearn.model.Department;
+import com.cognizant.ormlearn.repository.DepartmentRepository;
+
+@Service
+public class DepartmentService {
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Transactional
+    public Department get(int id){
+        return departmentRepository.findById(id).get();
+    }
+}
+
+package com.cognizant.ormlearn.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.cognizant.ormlearn.model.Skill;
+import com.cognizant.ormlearn.repository.SkillRepository;
+
+@Service
+public class SkillService {
+
+    @Autowired
+    private SkillRepository skillRepository;
+
+    @Transactional
+    public Skill get(int id){
+        return skillRepository.findById(id).get();
+    }
+}
+
+
+// ==========================================
+// FILE: OrmLearnApplication.java
+// ==========================================
+
+package com.cognizant.ormlearn;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import com.cognizant.ormlearn.repository.*;
+import com.cognizant.ormlearn.service.*;
+import com.cognizant.ormlearn.model.*;
+
+@SpringBootApplication
+public class OrmLearnApplication {
+
+    @Autowired
+    private CountryRepository countryRepository;
+
+    @Autowired
+    private StockRepository stockRepository;
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrmLearnApplication.class,args);
+    }
+
+    // Test Query Methods
+    public void testCountryQueries() {
+        System.out.println(
+                countryRepository.findByNameContaining("ou"));
+
+        System.out.println(
+                countryRepository.findByNameContainingOrderByNameAsc("ou"));
+
+        System.out.println(
+                countryRepository.findByNameStartingWith("Z"));
+    }
+
+    // Test ManyToOne + ManyToMany
+    public void testGetEmployee() {
+        Employee employee = employeeService.get(1);
+
+        System.out.println(employee);
+        System.out.println(employee.getDepartment());
+        System.out.println(employee.getSkillList());
+    }
+}
