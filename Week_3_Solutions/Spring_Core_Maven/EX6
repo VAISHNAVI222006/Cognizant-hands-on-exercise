@@ -1,0 +1,51 @@
+// ==============================
+// FILE: applicationContext.xml
+// ==============================
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context">
+
+    <!-- Component Scanning -->
+    <context:component-scan base-package="com.library"/>
+
+</beans>
+
+
+// ==============================
+// FILE: BookRepository.java
+// ==============================
+
+package com.library.repository;
+
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookRepository {
+
+    public void displayBook() {
+        System.out.println("Book Repository Using Annotation");
+    }
+}
+
+
+// ==============================
+// FILE: BookService.java
+// ==============================
+
+package com.library.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.library.repository.BookRepository;
+
+@Service
+public class BookService {
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    public void serviceMethod() {
+        bookRepository.displayBook();
+    }
+}
