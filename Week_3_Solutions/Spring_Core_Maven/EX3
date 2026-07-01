@@ -1,0 +1,60 @@
+// ==============================
+// FILE: pom.xml (Add Dependency)
+// ==============================
+
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aop</artifactId>
+    <version>5.3.30</version>
+</dependency>
+
+
+// ==============================
+// FILE: LoggingAspect.java
+// ==============================
+
+package com.library.aspect;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+
+public class LoggingAspect {
+
+    public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
+
+        long start = System.currentTimeMillis();
+
+        Object result = joinPoint.proceed();
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("Execution Time: " + (end - start) + " ms");
+
+        return result;
+    }
+}
+
+
+// ==============================
+// FILE: applicationContext.xml
+// ==============================
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop">
+
+    <bean id="bookRepository"
+          class="com.library.repository.BookRepository"/>
+
+    <bean id="bookService"
+          class="com.library.service.BookService"/>
+
+    <bean id="loggingAspect"
+          class="com.library.aspect.LoggingAspect"/>
+
+    <aop:config>
+        <aop:aspect ref="loggingAspect">
+            <aop:around method="logExecutionTime"
+                pointcut="execution(* com.library.service.*.*(..))"/>
+        </aop:aspect>
+    </aop:config>
+
+</beans>
