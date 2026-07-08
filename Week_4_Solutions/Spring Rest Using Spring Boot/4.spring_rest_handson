@@ -1,0 +1,655 @@
+// ============================================================
+// COMPLETE SPRING BOOT REST API - CRUD WITH VALIDATION
+// ============================================================
+// This file contains ALL code for:
+// 1. CRUD Operations (GET, POST, PUT, DELETE)
+// 2. Input Validation (javax.validation)
+// 3. Global Exception Handling
+// 4. Custom Error Responses
+// 5. Full Employee Management System
+// ============================================================
+
+package com.cognizant.springlearn;
+
+// ---------- IMPORTS ----------
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+
+// ============================================================
+// SECTION 1: MAIN APPLICATION CLASS
+// ============================================================
+
+/**
+ * Spring Boot Main Application
+ * REST API with full CRUD operations and validation
+ */
+@SpringBootApplication
+public class EmployeeManagementApplication {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeeManagementApplication.class);
+    
+    public static void main(String[] args) {
+        LOGGER.info("=== Starting Employee Management Application on port 8083 ===");
+        LOGGER.info("REST API endpoints:");
+        LOGGER.info("  GET    /employees      - Get all employees");
+        LOGGER.info("  GET    /employees/{id} - Get employee by ID");
+        LOGGER.info("  POST   /employees      - Create new employee");
+        LOGGER.info("  PUT    /employees      - Update existing employee");
+        LOGGER.info("  DELETE /employees/{id} - Delete employee by ID");
+        LOGGER.info("  GET    /departments    - Get all departments");
+        
+        SpringApplication.run(EmployeeManagementApplication.class, args);
+        
+        LOGGER.info("=== Application Started Successfully ===");
+        LOGGER.info("Access at: http://localhost:8083");
+    }
+}
+
+// ============================================================
+// SECTION 2: MODEL CLASSES WITH VALIDATION
+// ============================================================
+
+/**
+ * Employee Model with Validation Annotations
+ * Demonstrates all validation types:
+ * - @NotNull: Field cannot be null
+ * - @NotBlank: String cannot be null or empty
+ * - @Size: String length constraints
+ * - @Min/@Max: Numeric range constraints
+ * - @JsonFormat: Date format specification
+ */
+class Employee {
+    
+    @NotNull(message = "Employee ID is required")
+    @Min(value = 1, message = "Employee ID must be greater than 0")
+    private Integer id;
+    
+    @NotNull(message = "Employee name is required")
+    @NotBlank(message = "Employee name cannot be blank")
+    @Size(min = 1, max = 30, message = "Employee name must be between 1 and 30 characters")
+    private String name;
+    
+    @NotNull(message = "Gender is required")
+    private String gender;
+    
+    @NotNull(message = "Date of birth is required")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    private Date dateOfBirth;
+    
+    @NotNull(message = "Department is required")
+    private Department department;
+    
+    @NotNull(message = "Skills are required")
+    @Size(min = 1, message = "At least one skill is required")
+    private List<Skill> skills;
+    
+    @NotNull(message = "Salary is required")
+    @Min(value = 0, message = "Salary must be zero or positive")
+    private Double salary;
+    
+    @NotNull(message = "Permanent status is required")
+    private Boolean permanent;
+    
+    // Constructors
+    public Employee() {}
+    
+    public Employee(Integer id, String name, String gender, Date dateOfBirth, 
+                    Department department, List<Skill> skills, Double salary, Boolean permanent) {
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+        this.dateOfBirth = dateOfBirth;
+        this.department = department;
+        this.skills = skills;
+        this.salary = salary;
+        this.permanent = permanent;
+    }
+    
+    // Getters and Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    
+    public Date getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
+    
+    public List<Skill> getSkills() { return skills; }
+    public void setSkills(List<Skill> skills) { this.skills = skills; }
+    
+    public Double getSalary() { return salary; }
+    public void setSalary(Double salary) { this.salary = salary; }
+    
+    public Boolean getPermanent() { return permanent; }
+    public void setPermanent(Boolean permanent) { this.permanent = permanent; }
+    
+    @Override
+    public String toString() {
+        return "Employee [id=" + id + ", name=" + name + ", department=" + 
+               (department != null ? department.getName() : "null") + "]";
+    }
+}
+
+/**
+ * Department Model with Validation
+ */
+class Department {
+    
+    @NotNull(message = "Department ID is required")
+    @Min(value = 1, message = "Department ID must be greater than 0")
+    private Integer id;
+    
+    @NotNull(message = "Department name is required")
+    @NotBlank(message = "Department name cannot be blank")
+    @Size(min = 1, max = 30, message = "Department name must be between 1 and 30 characters")
+    private String name;
+    
+    public Department() {}
+    
+    public Department(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+    
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    @Override
+    public String toString() {
+        return "Department [id=" + id + ", name=" + name + "]";
+    }
+}
+
+/**
+ * Skill Model with Validation
+ */
+class Skill {
+    
+    @NotNull(message = "Skill ID is required")
+    @Min(value = 1, message = "Skill ID must be greater than 0")
+    private Integer id;
+    
+    @NotNull(message = "Skill name is required")
+    @NotBlank(message = "Skill name cannot be blank")
+    @Size(min = 1, max = 30, message = "Skill name must be between 1 and 30 characters")
+    private String name;
+    
+    public Skill() {}
+    
+    public Skill(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+    
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    @Override
+    public String toString() {
+        return "Skill [id=" + id + ", name=" + name + "]";
+    }
+}
+
+// ============================================================
+// SECTION 3: EXCEPTION CLASSES
+// ============================================================
+
+/**
+ * Employee Not Found Exception
+ * Maps to HTTP 404 Not Found
+ */
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Employee not found")
+class EmployeeNotFoundException extends Exception {
+    public EmployeeNotFoundException(String message) {
+        super(message);
+    }
+}
+
+/**
+ * Global Exception Handler
+ * @ControllerAdvice - Handles exceptions across all controllers
+ * Extends ResponseEntityExceptionHandler for built-in exception handling
+ * 
+ * Handles:
+ * 1. Validation errors (MethodArgumentNotValidException)
+ * 2. JSON parsing errors (HttpMessageNotReadableException)
+ * 3. Custom exceptions
+ */
+@ControllerAdvice
+class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    
+    /**
+     * Handle validation errors
+     * Triggered when @Valid validation fails
+     */
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers, 
+            HttpStatus status, 
+            WebRequest request) {
+        
+        LOGGER.info("START - GlobalExceptionHandler.handleMethodArgumentNotValid()");
+        
+        // Create error response body
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", new Date());
+        body.put("status", status.value());
+        body.put("error", "Validation Failed");
+        
+        // Get all validation errors
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(x -> x.getDefaultMessage())
+                .collect(Collectors.toList());
+        
+        body.put("errors", errors);
+        
+        LOGGER.debug("Validation errors: {}", errors);
+        LOGGER.info("END - GlobalExceptionHandler.handleMethodArgumentNotValid()");
+        
+        return new ResponseEntity<>(body, headers, status);
+    }
+    
+    /**
+     * Handle JSON parsing errors
+     * Triggered when invalid data type is provided (e.g., string for number)
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpHeaders headers,
+            HttpStatus status,
+            WebRequest request) {
+        
+        LOGGER.info("START - GlobalExceptionHandler.handleHttpMessageNotReadable()");
+        
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", new Date());
+        body.put("status", status.value());
+        body.put("error", "Bad Request");
+        
+        List<String> errors = new ArrayList<>();
+        
+        // Handle InvalidFormatException (wrong data type)
+        if (ex.getCause() instanceof InvalidFormatException) {
+            InvalidFormatException ife = (InvalidFormatException) ex.getCause();
+            for (InvalidFormatException.Reference reference : ife.getPath()) {
+                String fieldName = reference.getFieldName();
+                String errorMsg = "Incorrect format for field '" + fieldName + 
+                                 "'. Expected numeric value.";
+                errors.add(errorMsg);
+                LOGGER.debug("Field error: {}", errorMsg);
+            }
+        } else {
+            errors.add("Malformed JSON request");
+        }
+        
+        body.put("errors", errors);
+        
+        LOGGER.info("END - GlobalExceptionHandler.handleHttpMessageNotReadable()");
+        return new ResponseEntity<>(body, headers, status);
+    }
+}
+
+// ============================================================
+// SECTION 4: DAO CLASSES (Data Access Layer)
+// ============================================================
+
+/**
+ * Employee DAO - Data Access Layer
+ * @Repository - Marks as DAO component
+ * Manages in-memory employee data with CRUD operations
+ */
+@Repository
+class EmployeeDao {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeeDao.class);
+    
+    // In-memory employee list
+    private static ArrayList<Employee> EMPLOYEE_LIST = new ArrayList<>();
+    
+    /**
+     * Constructor - Loads employee data from XML
+     */
+    public EmployeeDao() {
+        LOGGER.info("START - EmployeeDao Constructor");
+        
+        ApplicationContext context = new ClassPathXmlApplicationContext("employee.xml");
+        @SuppressWarnings("unchecked")
+        ArrayList<Employee> employees = context.getBean("employeeList", ArrayList.class);
+        EMPLOYEE_LIST = employees;
+        
+        LOGGER.debug("Employee list loaded. Total employees: {}", EMPLOYEE_LIST.size());
+        LOGGER.info("END - EmployeeDao Constructor");
+    }
+    
+    /**
+     * GET - Get all employees
+     */
+    public List<Employee> getAllEmployees() {
+        LOGGER.debug("getAllEmployees() - Returning {} employees", EMPLOYEE_LIST.size());
+        return new ArrayList<>(EMPLOYEE_LIST);
+    }
+    
+    /**
+     * GET - Get employee by ID
+     */
+    public Employee getEmployeeById(int id) throws EmployeeNotFoundException {
+        LOGGER.debug("getEmployeeById() - Searching for employee: {}", id);
+        
+        return EMPLOYEE_LIST.stream()
+                .filter(e -> e.getId() == id)
+                .findFirst()
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
+    }
+    
+    /**
+     * POST - Add new employee
+     */
+    public void addEmployee(Employee employee) {
+        LOGGER.debug("addEmployee() - Adding employee: {}", employee.getName());
+        EMPLOYEE_LIST.add(employee);
+        LOGGER.debug("Employee added. Total employees: {}", EMPLOYEE_LIST.size());
+    }
+    
+    /**
+     * PUT - Update existing employee
+     */
+    public void updateEmployee(Employee updatedEmployee) throws EmployeeNotFoundException {
+        LOGGER.debug("updateEmployee() - Updating employee: {}", updatedEmployee.getId());
+        
+        // Find the existing employee
+        Employee existingEmployee = getEmployeeById(updatedEmployee.getId());
+        
+        // Update all fields
+        existingEmployee.setName(updatedEmployee.getName());
+        existingEmployee.setGender(updatedEmployee.getGender());
+        existingEmployee.setDateOfBirth(updatedEmployee.getDateOfBirth());
+        existingEmployee.setDepartment(updatedEmployee.getDepartment());
+        existingEmployee.setSkills(updatedEmployee.getSkills());
+        existingEmployee.setSalary(updatedEmployee.getSalary());
+        existingEmployee.setPermanent(updatedEmployee.getPermanent());
+        
+        LOGGER.debug("Employee updated successfully: {}", existingEmployee.getName());
+    }
+    
+    /**
+     * DELETE - Delete employee by ID
+     */
+    public void deleteEmployee(int id) throws EmployeeNotFoundException {
+        LOGGER.debug("deleteEmployee() - Deleting employee: {}", id);
+        
+        Employee employee = getEmployeeById(id);
+        EMPLOYEE_LIST.remove(employee);
+        
+        LOGGER.debug("Employee deleted. Remaining employees: {}", EMPLOYEE_LIST.size());
+    }
+}
+
+/**
+ * Department DAO - Data Access Layer
+ */
+@Repository
+class DepartmentDao {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentDao.class);
+    private static ArrayList<Department> DEPARTMENT_LIST = new ArrayList<>();
+    
+    public DepartmentDao() {
+        LOGGER.info("START - DepartmentDao Constructor");
+        
+        ApplicationContext context = new ClassPathXmlApplicationContext("employee.xml");
+        @SuppressWarnings("unchecked")
+        ArrayList<Department> departments = context.getBean("departmentList", ArrayList.class);
+        DEPARTMENT_LIST = departments;
+        
+        LOGGER.debug("Department list loaded. Total departments: {}", DEPARTMENT_LIST.size());
+        LOGGER.info("END - DepartmentDao Constructor");
+    }
+    
+    public List<Department> getAllDepartments() {
+        LOGGER.debug("getAllDepartments() - Returning {} departments", DEPARTMENT_LIST.size());
+        return new ArrayList<>(DEPARTMENT_LIST);
+    }
+}
+
+// ============================================================
+// SECTION 5: SERVICE CLASSES (Business Logic Layer)
+// ============================================================
+
+/**
+ * Employee Service - Business Logic Layer
+ * @Service - Marks as Service component
+ * @Transactional - Manages transactions
+ */
+@Service
+class EmployeeService {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeeService.class);
+    
+    @Autowired
+    private EmployeeDao employeeDao;
+    
+    @Transactional
+    public List<Employee> getAllEmployees() {
+        LOGGER.info("START - EmployeeService.getAllEmployees()");
+        List<Employee> employees = employeeDao.getAllEmployees();
+        LOGGER.info("END - EmployeeService.getAllEmployees()");
+        return employees;
+    }
+    
+    @Transactional
+    public Employee getEmployeeById(int id) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeService.getEmployeeById()");
+        Employee employee = employeeDao.getEmployeeById(id);
+        LOGGER.info("END - EmployeeService.getEmployeeById()");
+        return employee;
+    }
+    
+    @Transactional
+    public void addEmployee(Employee employee) {
+        LOGGER.info("START - EmployeeService.addEmployee()");
+        employeeDao.addEmployee(employee);
+        LOGGER.info("END - EmployeeService.addEmployee()");
+    }
+    
+    @Transactional
+    public void updateEmployee(Employee employee) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeService.updateEmployee()");
+        employeeDao.updateEmployee(employee);
+        LOGGER.info("END - EmployeeService.updateEmployee()");
+    }
+    
+    @Transactional
+    public void deleteEmployee(int id) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeService.deleteEmployee()");
+        employeeDao.deleteEmployee(id);
+        LOGGER.info("END - EmployeeService.deleteEmployee()");
+    }
+}
+
+/**
+ * Department Service - Business Logic Layer
+ */
+@Service
+class DepartmentService {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentService.class);
+    
+    @Autowired
+    private DepartmentDao departmentDao;
+    
+    @Transactional
+    public List<Department> getAllDepartments() {
+        LOGGER.info("START - DepartmentService.getAllDepartments()");
+        List<Department> departments = departmentDao.getAllDepartments();
+        LOGGER.info("END - DepartmentService.getAllDepartments()");
+        return departments;
+    }
+}
+
+// ============================================================
+// SECTION 6: CONTROLLER CLASSES (REST API Layer)
+// ============================================================
+
+/**
+ * Employee Controller - REST API with Full CRUD Operations
+ * 
+ * REST URL Naming Guidelines:
+ * - GET    /employees        - Get all employees
+ * - GET    /employees/{id}   - Get employee by ID
+ * - POST   /employees        - Create new employee (data in body)
+ * - PUT    /employees        - Update employee (data in body)
+ * - DELETE /employees/{id}   - Delete employee by ID
+ */
+@RestController
+@RequestMapping("/employees")
+class EmployeeController {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmployeeController.class);
+    
+    @Autowired
+    private EmployeeService employeeService;
+    
+    /**
+     * GET /employees - Get all employees
+     */
+    @GetMapping
+    public List<Employee> getAllEmployees() {
+        LOGGER.info("START - EmployeeController.getAllEmployees()");
+        List<Employee> employees = employeeService.getAllEmployees();
+        LOGGER.info("END - EmployeeController.getAllEmployees() - Returned {} employees", employees.size());
+        return employees;
+    }
+    
+    /**
+     * GET /employees/{id} - Get employee by ID
+     */
+    @GetMapping("/{id}")
+    public Employee getEmployeeById(@PathVariable int id) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeController.getEmployeeById() - ID: {}", id);
+        Employee employee = employeeService.getEmployeeById(id);
+        LOGGER.info("END - EmployeeController.getEmployeeById()");
+        return employee;
+    }
+    
+    /**
+     * POST /employees - Create new employee
+     * @Valid - Triggers validation
+     * @RequestBody - Maps JSON to Java object
+     */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Employee addEmployee(@Valid @RequestBody Employee employee) {
+        LOGGER.info("START - EmployeeController.addEmployee()");
+        LOGGER.debug("Adding employee: {}", employee.getName());
+        
+        employeeService.addEmployee(employee);
+        
+        LOGGER.debug("Employee added with ID: {}", employee.getId());
+        LOGGER.info("END - EmployeeController.addEmployee()");
+        return employee;
+    }
+    
+    /**
+     * PUT /employees - Update existing employee
+     * @Valid - Triggers validation
+     * @RequestBody - Maps JSON to Java object
+     */
+    @PutMapping
+    public Employee updateEmployee(@Valid @RequestBody Employee employee) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeController.updateEmployee() - ID: {}", employee.getId());
+        LOGGER.debug("Updating employee: {}", employee.getName());
+        
+        employeeService.updateEmployee(employee);
+        
+        LOGGER.debug("Employee updated: {}", employee.getName());
+        LOGGER.info("END - EmployeeController.updateEmployee()");
+        return employee;
+    }
+    
+    /**
+     * DELETE /employees/{id} - Delete employee by ID
+     */
+    @DeleteMapping("/{id}")
+    public void deleteEmployee(@PathVariable int id) throws EmployeeNotFoundException {
+        LOGGER.info("START - EmployeeController.deleteEmployee() - ID: {}", id);
+        
+        employeeService.deleteEmployee(id);
+        
+        LOGGER.debug("Employee deleted: {}", id);
+        LOGGER.info("END - EmployeeController.deleteEmployee()");
+    }
+}
+
+/**
+ * Department Controller - REST API
+ */
+@RestController
+@RequestMapping("/departments")
+class DepartmentController {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(DepartmentController.class);
+    
+    @Autowired
+    private DepartmentService departmentService;
+    
+    /**
+     * GET /departments - Get all departments
+     */
+    @GetMapping
+    public List<Department> getAllDepartments() {
+        LOGGER.info("START - DepartmentController.getAllDepartments()");
+        List<Department> departments = departmentService.getAllDepartments();
+        LOGGER.info("END - DepartmentController.getAllDepartments() - Returned {} departments", departments.size());
+        return departments;
+    }
+}
+
+// ============================================================
+// END OF COMPLETE APPLICATION CODE
+// ============================================================
