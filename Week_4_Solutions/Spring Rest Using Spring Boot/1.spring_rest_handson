@@ -1,1 +1,661 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <!-- Spring Boot Parent Starter - Provides default configurations -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.0</version>
+        <relativePath/>
+    </parent>
+    
+    <!-- Project Coordinates -->
+    <groupId>com.cognizant</groupId>
+    <artifactId>spring-learn</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>spring-learn</name>
+    <description>Spring Boot Learning Project - Demonstrates Spring Core Features</description>
+    
+    <!-- Java Version -->
+    <properties>
+        <java.version>11</java.version>
+    </properties>
+    
+    <!-- Dependencies -->
+    <dependencies>
+        <!-- Spring Boot Web Starter - For web applications, includes embedded Tomcat -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <!-- Spring Boot DevTools - For development, provides automatic restart -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- Spring Boot Test - For testing the application -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <!-- Spring Context - Required for XML Configuration and ApplicationContext -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <!-- Build Configuration -->
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin - Creates executable JAR -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+# ============================================
+# APPLICATION PROPERTIES CONFIGURATION
+# ============================================
 
+# ---------- Logging Configuration ----------
+# Set logging level for Spring Framework to INFO (shows only important messages)
+logging.level.org.springframework=info
+
+# Set logging level for our application to DEBUG (shows detailed messages)
+logging.level.com.cognizant.springlearn=debug
+
+# Configure log output format pattern
+# %d{yyMMdd}|%d{HH:mm:ss.SSS} - Date and time
+# %-20.20thread - Thread name (left-aligned, 20 chars)
+# %5p - Log level (5 chars)
+# %-25.25logger{25} - Logger name (left-aligned, 25 chars)
+# %25M - Method name (25 chars)
+# %m%n - Message and new line
+logging.pattern.console=%d{yyMMdd}|%d{HH:mm:ss.SSS}|%-20.20thread|%5p|%-25.25logger{25}|%25M|%m%n
+
+# ---------- Server Configuration ----------
+# Uncomment if Tomcat port conflict occurs (default port 8080)
+# server.port=8081
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    ============================================================
+    SPRING CONFIGURATION XML - date-format.xml
+    ============================================================
+    This file demonstrates Spring Bean Configuration using XML
+    URL Reference: https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-factory-metadata
+-->
+
+<!-- Spring Beans Schema Declaration -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- 
+        ============================================================
+        BEAN CONFIGURATION: SimpleDateFormat
+        ============================================================
+        Purpose: Create a date formatter bean that can be reused
+        throughout the application
+        
+        Bean Attributes:
+        - id: Unique identifier for this bean (used to retrieve it)
+        - class: Fully qualified class name (FQCN) of the bean
+        
+        Constructor Injection:
+        - <constructor-arg>: Injects value through constructor
+        - value: The value to be injected (pattern "dd/MM/yyyy")
+        
+        Benefit: Instead of creating SimpleDateFormat in multiple places,
+        we define it once here and reuse it everywhere
+    -->
+    <bean id="dateFormat" class="java.text.SimpleDateFormat">
+        <constructor-arg value="dd/MM/yyyy" />
+    </bean>
+
+</beans>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    ============================================================
+    SPRING CONFIGURATION XML - country.xml
+    ============================================================
+    Demonstrates bean configuration with properties and collections
+    URL Reference: https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans
+-->
+
+<!-- Spring Beans Schema Declaration -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- 
+        ============================================================
+        INDIVIDUAL COUNTRY BEAN DEFINITIONS
+        ============================================================
+        Demonstrates Setter Injection using <property> tag
+        
+        Bean Attributes:
+        - id: Unique identifier for each country bean
+        - class: Country class (com.cognizant.springlearn.Country)
+        
+        Property Injection:
+        - <property>: Injects value through setter method
+        - name: Name of the property (matches setter method)
+        - value: Value to be injected
+    -->
+    
+    <!-- India - ISO Code: IN -->
+    <bean id="in" class="com.cognizant.springlearn.Country">
+        <property name="code" value="IN" />
+        <property name="name" value="India" />
+    </bean>
+    
+    <!-- United States - ISO Code: US -->
+    <bean id="us" class="com.cognizant.springlearn.Country">
+        <property name="code" value="US" />
+        <property name="name" value="United States" />
+    </bean>
+    
+    <!-- Germany - ISO Code: DE -->
+    <bean id="de" class="com.cognizant.springlearn.Country">
+        <property name="code" value="DE" />
+        <property name="name" value="Germany" />
+    </bean>
+    
+    <!-- Japan - ISO Code: JP -->
+    <bean id="jp" class="com.cognizant.springlearn.Country">
+        <property name="code" value="JP" />
+        <property name="name" value="Japan" />
+    </bean>
+
+    <!-- 
+        ============================================================
+        COLLECTION INJECTION - List of Countries
+        ============================================================
+        Demonstrates injecting a collection (ArrayList) of beans
+        
+        Elements:
+        - <constructor-arg>: Constructor injection with collection
+        - <list>: Defines a list collection
+        - <ref>: Reference to another bean (by bean id)
+        - bean attribute: The id of the bean to reference
+        
+        Purpose: Create a list containing all country beans for the
+        airlines website's country dropdown
+    -->
+    <bean id="countryList" class="java.util.ArrayList">
+        <constructor-arg>
+            <list>
+                <!-- References to individual country beans -->
+                <ref bean="in"/>
+                <ref bean="us"/>
+                <ref bean="de"/>
+                <ref bean="jp"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- 
+        ============================================================
+        SINGLETON SCOPE DEMONSTRATION (Default)
+        ============================================================
+        scope="singleton" - Only one instance is created per container
+        This is the DEFAULT scope in Spring
+        
+        When getBean() is called multiple times, the SAME instance is returned
+        The constructor is called only ONCE
+    -->
+    <bean id="country" class="com.cognizant.springlearn.Country" scope="singleton">
+        <property name="code" value="IN" />
+        <property name="name" value="India" />
+    </bean>
+
+    <!-- 
+        ============================================================
+        PROTOTYPE SCOPE DEMONSTRATION (Commented)
+        ============================================================
+        scope="prototype" - New instance created each time getBean() is called
+        The constructor is called each time getBean() is invoked
+        
+        To test: Uncomment this and comment the singleton bean above
+    -->
+    <!-- 
+    <bean id="country" class="com.cognizant.springlearn.Country" scope="prototype">
+        <property name="code" value="IN" />
+        <property name="name" value="India" />
+    </bean>
+    -->
+
+</beans>
+package com.cognizant.springlearn;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * ============================================================
+ * COUNTRY CLASS
+ * ============================================================
+ * Represents a country with its ISO code and name
+ * 
+ * This class demonstrates:
+ * 1. Spring Bean with properties
+ * 2. Getter and Setter methods with logging
+ * 3. Constructor with logging
+ * 4. toString() method
+ * 
+ * Purpose: Used for the airlines website to store country information
+ * for the country dropdown on the home page
+ */
+public class Country {
+    
+    // ---------- Logger Configuration ----------
+    // SLF4J Logger - Used for logging messages throughout the class
+    private static final Logger LOGGER = LoggerFactory.getLogger(Country.class);
+    
+    // ---------- Instance Variables ----------
+    private String code;    // Two-character ISO code (e.g., "IN", "US", "DE", "JP")
+    private String name;    // Full country name (e.g., "India", "United States")
+    
+    /**
+     * ============================================================
+     * DEFAULT CONSTRUCTOR
+     * ============================================================
+     * Empty parameter constructor
+     * 
+     * Important: Logs when a new Country instance is created
+     * This helps demonstrate bean scope behavior:
+     * - Singleton: Called only ONCE
+     * - Prototype: Called EACH TIME getBean() is invoked
+     */
+    public Country() {
+        LOGGER.debug("Inside Country Constructor.");
+    }
+    
+    /**
+     * ============================================================
+     * GETTER FOR CODE
+     * ============================================================
+     * @return the country code (two-character ISO code)
+     * 
+     * Includes debug log to track when getter is called
+     */
+    public String getCode() {
+        LOGGER.debug("Inside getCode() method.");
+        return code;
+    }
+    
+    /**
+     * ============================================================
+     * SETTER FOR CODE
+     * ============================================================
+     * @param code the country code to set
+     * 
+     * Includes debug log to track when setter is called
+     * Called by Spring during property injection
+     */
+    public void setCode(String code) {
+        LOGGER.debug("Inside setCode() method.");
+        this.code = code;
+    }
+    
+    /**
+     * ============================================================
+     * GETTER FOR NAME
+     * ============================================================
+     * @return the country name
+     * 
+     * Includes debug log to track when getter is called
+     */
+    public String getName() {
+        LOGGER.debug("Inside getName() method.");
+        return name;
+    }
+    
+    /**
+     * ============================================================
+     * SETTER FOR NAME
+     * ============================================================
+     * @param name the country name to set
+     * 
+     * Includes debug log to track when setter is called
+     * Called by Spring during property injection
+     */
+    public void setName(String name) {
+        LOGGER.debug("Inside setName() method.");
+        this.name = name;
+    }
+    
+    /**
+     * ============================================================
+     * TO STRING METHOD
+     * ============================================================
+     * Overrides default toString() to provide meaningful output
+     * @return String representation of Country
+     */
+    @Override
+    public String toString() {
+        return "Country [code=" + code + ", name=" + name + "]";
+    }
+}
+package com.cognizant.springlearn;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+/**
+ * ============================================================
+ * SPRING BOOT MAIN APPLICATION CLASS
+ * ============================================================
+ * 
+ * This class demonstrates all Spring Boot and Spring Core concepts:
+ * 
+ * 1. Spring Boot Application Creation
+ * 2. Loading beans from XML configuration
+ * 3. Logging implementation
+ * 4. Singleton vs Prototype scope
+ * 5. Collection injection
+ * 
+ * URL References:
+ * - Spring Initializr: https://start.spring.io
+ * - Spring Boot Tutorial: https://www.journaldev.com/7969/spring-boot-tutorial
+ * - Spring Framework Core: https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html
+ * - Logging: https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html
+ */
+@SpringBootApplication
+public class SpringLearnApplication {
+    
+    // ---------- Logger Configuration ----------
+    // SLF4J Logger - Used for logging throughout the application
+    // IMPORTANT: Never use System.out.println(), always use LOGGER
+    private static final Logger LOGGER = LoggerFactory.getLogger(SpringLearnApplication.class);
+    
+    /**
+     * ============================================================
+     * MAIN METHOD - Application Entry Point
+     * ============================================================
+     * 
+     * Purpose:
+     * 1. Bootstraps the Spring Boot application
+     * 2. Creates Spring ApplicationContext
+     * 3. Starts embedded Tomcat server
+     * 4. Demonstrates all Spring features
+     * 
+     * @SpringBootApplication - Combines three annotations:
+     *   - @Configuration: Marks as configuration class
+     *   - @EnableAutoConfiguration: Enables auto-configuration
+     *   - @ComponentScan: Scans for components in the package
+     * 
+     * SpringApplication.run() - Bootstraps the application:
+     *   - Sets up Spring container
+     *   - Starts embedded web server
+     *   - Initializes all beans
+     */
+    public static void main(String[] args) {
+        LOGGER.info("Starting SpringLearnApplication...");
+        
+        // ---------- Spring Boot Initialization ----------
+        // Creates Spring context and starts embedded Tomcat server
+        SpringApplication.run(SpringLearnApplication.class, args);
+        LOGGER.info("SpringLearnApplication started successfully.");
+        
+        // ---------- Create Instance to Call Methods ----------
+        SpringLearnApplication app = new SpringLearnApplication();
+        
+        // ---------- Demonstrate Spring Features ----------
+        // Hands on 2: Loading SimpleDateFormat from Spring XML
+        app.displayDate();
+        
+        // Hands on 4: Loading Country from Spring XML
+        app.displayCountry();
+        
+        // Hands on 6: Loading list of countries from Spring XML
+        app.displayCountries();
+        
+        // Hands on 5: Demonstrating Prototype Scope (optional)
+        // Uncomment to test prototype scope
+        // app.demonstratePrototypeScope();
+    }
+    
+    /**
+     * ============================================================
+     * HANDS ON 2: LOADING SIMPLEDATEFORMAT FROM SPRING XML
+     * ============================================================
+     * 
+     * Objective: Demonstrate loading bean from Spring configuration XML
+     * 
+     * Why: Avoid creating SimpleDateFormat in multiple places
+     * Define once in XML and reuse throughout application
+     * 
+     * Steps:
+     * 1. Create XML configuration (date-format.xml)
+     * 2. Define bean with constructor-arg (pattern)
+     * 3. Create ApplicationContext
+     * 4. Get bean using getBean()
+     * 5. Use the bean to format/parse dates
+     * 
+     * Concepts Demonstrated:
+     * - ClassPathXmlApplicationContext
+     * - ApplicationContext
+     * - getBean() with type safety
+     * - Constructor injection
+     * - Bean id and class
+     */
+    public void displayDate() {
+        LOGGER.info("START - displayDate()");
+        
+        try {
+            // ---------- Step 1: Create ApplicationContext ----------
+            // ClassPathXmlApplicationContext - Loads XML from classpath
+            // Loads date-format.xml from src/main/resources
+            ApplicationContext context = new ClassPathXmlApplicationContext("date-format.xml");
+            LOGGER.debug("ApplicationContext created successfully.");
+            
+            // ---------- Step 2: Get the dateFormat Bean ----------
+            // context.getBean(beanId, targetClass)
+            // - beanId: "dateFormat" (matches id in XML)
+            // - targetClass: SimpleDateFormat.class (type-safe retrieval)
+            SimpleDateFormat format = context.getBean("dateFormat", SimpleDateFormat.class);
+            LOGGER.debug("SimpleDateFormat bean retrieved: {}", format);
+            
+            // ---------- Step 3: Use the Bean ----------
+            // Parse a date string using the injected pattern "dd/MM/yyyy"
+            String dateString = "31/12/2018";
+            Date date = format.parse(dateString);
+            
+            // ---------- Step 4: Display Results ----------
+            LOGGER.debug("Parsed date: {}", date);
+            LOGGER.debug("Formatted date: {}", format.format(date));
+            
+        } catch (Exception e) {
+            LOGGER.error("Error in displayDate(): {}", e.getMessage());
+        }
+        
+        LOGGER.info("END - displayDate()");
+    }
+    
+    /**
+     * ============================================================
+     * HANDS ON 4: LOADING COUNTRY FROM SPRING XML
+     * ============================================================
+     * 
+     * Objective: Store and retrieve country data from Spring XML
+     * 
+     * Business Context: Airlines website supports booking on four countries
+     * Country dropdown on home page needs ISO code and name
+     * 
+     * Steps:
+     * 1. Create Country class with code and name
+     * 2. Configure bean in country.xml
+     * 3. Load configuration using ApplicationContext
+     * 4. Get bean using getBean()
+     * 5. Display country details
+     * 
+     * Concepts Demonstrated:
+     * - Bean tag with id and class
+     * - Property tag with name and value (Setter injection)
+     * - ApplicationContext and ClassPathXmlApplicationContext
+     * - What happens when getBean() is invoked
+     * - Singleton scope (default)
+     */
+    public void displayCountry() {
+        LOGGER.info("START - displayCountry()");
+        
+        // ---------- Step 1: Create ApplicationContext ----------
+        // Loads country.xml from classpath
+        ApplicationContext context = new ClassPathXmlApplicationContext("country.xml");
+        LOGGER.debug("ApplicationContext created successfully.");
+        
+        // ---------- Step 2: Get Country Bean (Singleton) ----------
+        // context.getBean() - When invoked:
+        // 1. Checks if bean already exists in container
+        // 2. If exists (singleton), returns existing instance
+        // 3. If not exists, creates new instance
+        // 4. Applies dependency injection (setters)
+        // 5. Returns the bean instance
+        Country country = context.getBean("country", Country.class);
+        LOGGER.debug("Country bean retrieved (Singleton): {}", country.toString());
+        
+        // ---------- Step 3: Get Another Reference ----------
+        // Demonstrates Singleton Scope - Same instance returned
+        // The constructor will be called only ONCE
+        Country anotherCountry = context.getBean("country", Country.class);
+        LOGGER.debug("Another reference to same bean: {}", anotherCountry.toString());
+        
+        // ---------- Step 4: Verify Singleton Scope ----------
+        // In Singleton scope, both references point to SAME object
+        boolean isSame = (country == anotherCountry);
+        LOGGER.debug("Both references point to same object: {}", isSame);
+        LOGGER.debug("Country hashcode - first: {}, second: {}", 
+                    country.hashCode(), anotherCountry.hashCode());
+        
+        LOGGER.info("END - displayCountry()");
+    }
+    
+    /**
+     * ============================================================
+     * HANDS ON 6: LOADING LIST OF COUNTRIES FROM SPRING XML
+     * ============================================================
+     * 
+     * Objective: Retrieve list of four countries for airlines website
+     * 
+     * Business Context: All four countries (US, DE, IN, JP) needed
+     * for country dropdown on home page
+     * 
+     * Steps:
+     * 1. Create individual country beans for all four countries
+     * 2. Create ArrayList with all country references
+     * 3. Use <list> and <ref> in XML
+     * 4. Load configuration and get the list
+     * 5. Display all countries
+     * 
+     * Concepts Demonstrated:
+     * - <list> - Defines a list collection
+     * - <ref> - References another bean by id
+     * - bean attribute - The id of the bean to reference
+     * - Constructor injection with ArrayList
+     * - Collection injection
+     */
+    public void displayCountries() {
+        LOGGER.info("START - displayCountries()");
+        
+        // ---------- Step 1: Create ApplicationContext ----------
+        // Loads country.xml from classpath
+        ApplicationContext context = new ClassPathXmlApplicationContext("country.xml");
+        LOGGER.debug("ApplicationContext created successfully.");
+        
+        // ---------- Step 2: Get Country List Bean ----------
+        // Type-safe retrieval of ArrayList
+        // @SuppressWarnings required because ArrayList is not generic in XML
+        @SuppressWarnings("unchecked")
+        ArrayList<Country> countries = context.getBean("countryList", ArrayList.class);
+        LOGGER.debug("Country list retrieved. Size: {}", countries.size());
+        
+        // ---------- Step 3: Display All Countries ----------
+        LOGGER.debug("=== Country List ===");
+        for (int i = 0; i < countries.size(); i++) {
+            Country country = countries.get(i);
+            LOGGER.debug("Country {}: {}", (i + 1), country.toString());
+        }
+        
+        // ---------- Step 4: Display Additional Details ----------
+        LOGGER.debug("Total countries: {}", countries.size());
+        LOGGER.debug("First country: {}", countries.get(0));
+        LOGGER.debug("Last country: {}", countries.get(countries.size() - 1));
+        
+        LOGGER.info("END - displayCountries()");
+    }
+    
+    /**
+     * ============================================================
+     * HANDS ON 5: DEMONSTRATION OF PROTOTYPE SCOPE
+     * ============================================================
+     * 
+     * Objective: Demonstrate the difference between Singleton and Prototype scope
+     * 
+     * How to test:
+     * 1. In country.xml, change scope="singleton" to scope="prototype"
+     * 2. Uncomment this method call in main()
+     * 3. Run the application
+     * 
+     * Singleton Scope (Default):
+     * - One instance per container
+     * - Constructor called only ONCE
+     * - Same instance returned for all getBean() calls
+     * - Memory efficient
+     * 
+     * Prototype Scope:
+     * - New instance created each time
+     * - Constructor called EACH TIME getBean() is invoked
+     * - Different instances returned for each getBean() call
+     * - Use when stateful beans are needed
+     * 
+     * Concepts Demonstrated:
+     * - scope attribute in bean definition
+     * - Singleton vs Prototype behavior
+     * - When constructor is called in each scope
+     */
+    public void demonstratePrototypeScope() {
+        LOGGER.info("START - demonstratePrototypeScope()");
+        
+        // ---------- Create ApplicationContext ----------
+        ApplicationContext context = new ClassPathXmlApplicationContext("country.xml");
+        LOGGER.debug("ApplicationContext created.");
+        
+        // ---------- Get Bean Multiple Times ----------
+        // In prototype scope, new instance created each time
+        Country country1 = context.getBean("country", Country.class);
+        Country country2 = context.getBean("country", Country.class);
+        
+        // ---------- Display Results ----------
+        LOGGER.debug("Country 1: {}", country1.toString());
+        LOGGER.debug("Country 2: {}", country2.toString());
+        LOGGER.debug("Are references same? {}", (country1 == country2));
+        LOGGER.debug("Hashcodes - Country1: {}, Country2: {}", 
+                    country1.hashCode(), country2.hashCode());
+        
+        LOGGER.info("END - demonstratePrototypeScope()");
+    }
+}
