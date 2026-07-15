@@ -1,0 +1,1399 @@
+/**
+ * ============================================================================
+ * ENTERPRISE APPLICATION THEORY AND MICROSERVICES IMPLEMENTATION
+ * ============================================================================
+ * 
+ * PROJECT: Bank Microservices Demo
+ * VERSION: 1.0.0
+ * JAVA: 17+
+ * SPRING BOOT: 3.1.5
+ * SPRING CLOUD: 2022.0.4
+ * 
+ * ============================================================================
+ * TABLE OF CONTENTS
+ * ============================================================================
+ * 
+ * PART 1: ENTERPRISE APPLICATION THEORY
+ *   - What is an Enterprise Application
+ *   - Banking Services Overview
+ *   - Monolithic vs Microservices Architecture
+ *   - Advantages and Challenges
+ * 
+ * PART 2: ACCOUNT MICROSERVICE (Port: 8081)
+ *   - Account REST API
+ *   - Eureka Discovery Client
+ * 
+ * PART 3: LOAN MICROSERVICE (Port: 8082)
+ *   - Loan REST API
+ *   - Eureka Discovery Client
+ * 
+ * PART 4: EUREKA DISCOVERY SERVER (Port: 8761)
+ *   - Service Registry
+ *   - Service Discovery
+ * 
+ * PART 5: API GATEWAY (Port: 9090)
+ *   - Spring Cloud Gateway
+ *   - Global Filter for Logging
+ *   - Route Configuration
+ * 
+ * ============================================================================
+ * HOW TO USE:
+ * 1. Start Eureka Discovery Server first (Port: 8761)
+ * 2. Start Account Microservice (Port: 8081)
+ * 3. Start Loan Microservice (Port: 8082)
+ * 4. Start API Gateway (Port: 9090)
+ * 5. Access services through Gateway: http://localhost:9090/account-service/accounts/12345
+ * ============================================================================
+ */
+
+// ============================================================================
+// PART 1: ENTERPRISE APPLICATION THEORY
+// ============================================================================
+/**
+ * ============================================================================
+ * WHAT IS AN ENTERPRISE APPLICATION?
+ * ============================================================================
+ * 
+ * An Enterprise Application is a large-scale software system designed to support
+ * complex business processes and operations of an organization. These applications
+ * handle critical business functions and are essential for day-to-day operations.
+ * 
+ * ============================================================================
+ * BANKING SERVICES OVERVIEW
+ * ============================================================================
+ * 
+ * 1. Core Banking Services:
+ *    - Savings Account Management
+ *    - Current Account Management
+ *    - Fixed Deposits
+ *    - Recurring Deposits
+ * 
+ * 2. Lending Services:
+ *    - Home Loans
+ *    - Car Loans
+ *    - Personal Loans
+ *    - Education Loans
+ *    - Business Loans
+ * 
+ * 3. Investment Services:
+ *    - Mutual Funds
+ *    - Stocks Trading
+ *    - Bonds
+ *    - Insurance Products
+ * 
+ * 4. Digital Banking:
+ *    - Internet Banking
+ *    - Mobile Banking
+ *    - SMS Banking
+ *    - Phone Banking
+ *    - ATM Services
+ * 
+ * 5. Payment Services:
+ *    - NEFT/RTGS/IMPS
+ *    - UPI Payments
+ *    - Bill Payments
+ *    - Credit Card Payments
+ * 
+ * 6. Customer Services:
+ *    - Customer Relationship Management
+ *    - Complaint Management
+ *    - Service Requests
+ *    - Feedback Management
+ * 
+ * 7. Branch Operations:
+ *    - Teller Services
+ *    - Cash Management
+ *    - Cheque Processing
+ *    - Account Opening
+ * 
+ * 8. Backend Operations:
+ *    - Batch Processing
+ *    - EMI Processing
+ *    - Interest Calculation
+ *    - Reconciliation
+ * 
+ * ============================================================================
+ * MONOLITHIC SERVICES
+ * ============================================================================
+ * 
+ * Definition: A monolithic application is built as a single unified unit where
+ * all components are tightly coupled and deployed together.
+ * 
+ * Characteristics:
+ * - Single codebase
+ * - Single deployment unit (EAR/WAR)
+ * - Shared database
+ * - Single technology stack
+ * 
+ * Drawbacks:
+ * 1. Single Point of Failure: If one component fails, entire application fails
+ * 2. Scaling Difficult: Can only scale the entire application
+ * 3. Technology Lock-in: Cannot use different technologies for different components
+ * 4. Development Bottleneck: Large teams working on same codebase
+ * 5. Deployment Risk: Any change requires redeploying entire application
+ * 6. Performance Issues: Memory leak in one service affects all services
+ * 
+ * Real-World Example - Bank Monolith:
+ * - Account Service
+ * - Loan Service
+ * - Insurance Service
+ * - Payment Service
+ * - All packaged in single WAR file
+ * - Deployed on a single application server
+ * - If Account Service has memory leak, all services become slow/unavailable
+ * 
+ * ============================================================================
+ * MICROSERVICES ARCHITECTURE
+ * ============================================================================
+ * 
+ * Definition: Microservices is an architectural style that structures an application
+ * as a collection of loosely coupled, independently deployable services.
+ * 
+ * Characteristics:
+ * - Each service runs independently
+ * - Each service has its own database
+ * - Services communicate via APIs
+ * - Polyglot architecture (different tech stacks)
+ * - Independently deployable
+ * - Organized around business capabilities
+ * 
+ * Advantages:
+ * 1. Independent Deployment: Each service can be deployed independently
+ * 2. Scalability: Scale only services that need scaling
+ * 3. Fault Isolation: Failure in one service doesn't affect others
+ * 4. Technology Diversity: Use best technology for each service
+ * 5. Team Autonomy: Teams can own and manage specific services
+ * 6. Continuous Delivery: Easier to implement CI/CD
+ * 7. Easier Debugging: Issues are isolated to specific services
+ * 8. Improved Availability: Services can be restarted independently
+ * 
+ * Challenges:
+ * 1. Distributed System Complexity
+ * 2. Network Latency and Faults
+ * 3. Data Consistency
+ * 4. Distributed Transactions
+ * 5. Service Discovery
+ * 6. API Gateway Required
+ * 7. Monitoring and Logging Complexity
+ * 8. Testing Complexity
+ * 9. Security Challenges
+ * 
+ * ============================================================================
+ * MONOLITHIC VS MICROSERVICES - COMPARISON
+ * ============================================================================
+ * 
+ * Aspect          | Monolithic                 | Microservices
+ * ----------------|---------------------------|-------------------------------
+ * Deployment      | Single unit               | Multiple independent units
+ * Scaling         | Scale entire app          | Scale individual services
+ * Development     | Single codebase           | Multiple codebases
+ * Technology      | Single stack              | Multiple stacks
+ * Team Structure  | Large team                | Small, focused teams
+ * Database        | Shared database           | Database per service
+ * Communication   | In-memory calls           | Network calls (REST/Message)
+ * Fault Tolerance | Single point of failure   | Isolated failures
+ * Deployment      | Slow, risky               | Fast, independent
+ * 
+ * ============================================================================
+ * BANKING SCENARIO - BEFORE AND AFTER MICROSERVICES
+ * ============================================================================
+ * 
+ * BEFORE (Monolithic):
+ * - All services in single WAR file
+ * - Festival shopping causes high volume on account balance service
+ * - Memory leak in account balance service
+ * - Entire application becomes unresponsive
+ * - Loan applications fail
+ * - Insurance processing fails
+ * - Customer service cannot process credit card reports
+ * - Server restart required, 2-3 hours downtime
+ * 
+ * AFTER (Microservices):
+ * - Account service, Loan service, Insurance service separate
+ * - Festival shopping affects only Account service
+ * - Loan and Insurance services continue working
+ * - Customers can still submit loan applications
+ * - Insurance processing continues
+ * - Customer service can report stolen cards
+ * - Only Account service needs restart
+ * - No downtime for other services
+ * 
+ * ============================================================================
+ * SERVICE DISCOVERY (EUREKA)
+ * ============================================================================
+ * 
+ * What is Service Discovery?
+ * - Mechanism for services to find each other
+ * - Services register themselves with Discovery Server
+ * - Clients query Discovery Server to find services
+ * - Enables dynamic scaling
+ * 
+ * Eureka Server:
+ * - Netflix's service discovery server
+ * - Maintains registry of available services
+ * - Services register with Eureka on startup
+ * - Heartbeats maintain service availability
+ * 
+ * ============================================================================
+ * API GATEWAY
+ * ============================================================================
+ * 
+ * What is API Gateway?
+ * - Single entry point for all clients
+ * - Routes requests to appropriate microservices
+ * - Handles cross-cutting concerns:
+ *   - Authentication/Authorization
+ *   - Rate Limiting
+ *   - Caching
+ *   - Request/Response Transformation
+ *   - Logging
+ *   - Metrics
+ * 
+ * Benefits:
+ * - Simplifies client code
+ * - Reduces number of requests
+ * - Implements security policies
+ * - Enables protocol translation
+ * - Provides centralized monitoring
+ * 
+ * ============================================================================
+ */
+
+// ============================================================================
+// PART 2: ACCOUNT MICROSERVICE
+// ============================================================================
+
+// ============================================================================
+// 2.1 ACCOUNT MICROSERVICE - POM.XML
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.cognizant</groupId>
+    <artifactId>account</artifactId>
+    <version>1.0.0</version>
+    <name>account</name>
+    <description>Account Microservice</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// 2.2 ACCOUNT MICROSERVICE - APPLICATION.PROPERTIES
+// ============================================================================
+/*
+spring.application.name=account-service
+server.port=8081
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+logging.level.com.cognizant=DEBUG
+*/
+
+// ============================================================================
+// 2.3 ACCOUNT MICROSERVICE - MAIN APPLICATION
+// ============================================================================
+package com.cognizant.account;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class AccountApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(AccountApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 2.4 ACCOUNT MICROSERVICE - CONTROLLER
+// ============================================================================
+package com.cognizant.account.controller;
+
+import com.cognizant.account.model.Account;
+import com.cognizant.account.service.AccountService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@Slf4j
+@RestController
+@RequestMapping("/accounts")
+@RequiredArgsConstructor
+public class AccountController {
+    
+    private final AccountService accountService;
+    
+    @GetMapping("/{number}")
+    public ResponseEntity<Account> getAccountByNumber(@PathVariable String number) {
+        log.info("Fetching account details for number: {}", number);
+        Account account = accountService.getAccountByNumber(number);
+        return ResponseEntity.ok(account);
+    }
+    
+    @PostMapping
+    public ResponseEntity<Account> createAccount(@RequestBody Account account) {
+        log.info("Creating new account: {}", account.getNumber());
+        Account createdAccount = accountService.createAccount(account);
+        return ResponseEntity.ok(createdAccount);
+    }
+}
+
+// ============================================================================
+// 2.5 ACCOUNT MICROSERVICE - MODEL
+// ============================================================================
+package com.cognizant.account.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Account {
+    private String number;
+    private String type;
+    private double balance;
+    private String customerName;
+    private String branchCode;
+    private String status;
+}
+
+// ============================================================================
+// 2.6 ACCOUNT MICROSERVICE - SERVICE
+// ============================================================================
+package com.cognizant.account.service;
+
+import com.cognizant.account.model.Account;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Service
+public class AccountService {
+    
+    // Simulated database
+    private final Map<String, Account> accountDatabase = new HashMap<>();
+    
+    public AccountService() {
+        // Initialize with some dummy data
+        accountDatabase.put("ACC12345", new Account("ACC12345", "Savings", 50000.00, "John Doe", "BR001", "Active"));
+        accountDatabase.put("ACC67890", new Account("ACC67890", "Current", 150000.00, "Jane Smith", "BR002", "Active"));
+        accountDatabase.put("ACC11111", new Account("ACC11111", "Savings", 25000.00, "Bob Johnson", "BR001", "Active"));
+    }
+    
+    public Account getAccountByNumber(String number) {
+        log.info("Retrieving account from database: {}", number);
+        
+        // Simulate database access delay
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        Account account = accountDatabase.get(number);
+        if (account == null) {
+            log.warn("Account not found: {}", number);
+            // Return dummy account if not found
+            return new Account(number, "Savings", 10000.00, "Unknown Customer", "BR000", "Active");
+        }
+        
+        return account;
+    }
+    
+    public Account createAccount(Account account) {
+        log.info("Creating account in database: {}", account.getNumber());
+        accountDatabase.put(account.getNumber(), account);
+        return account;
+    }
+}
+
+// ============================================================================
+// PART 3: LOAN MICROSERVICE
+// ============================================================================
+
+// ============================================================================
+// 3.1 LOAN MICROSERVICE - POM.XML
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.cognizant</groupId>
+    <artifactId>loan</artifactId>
+    <version>1.0.0</version>
+    <name>loan</name>
+    <description>Loan Microservice</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// 3.2 LOAN MICROSERVICE - APPLICATION.PROPERTIES
+// ============================================================================
+/*
+spring.application.name=loan-service
+server.port=8082
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+logging.level.com.cognizant=DEBUG
+*/
+
+// ============================================================================
+// 3.3 LOAN MICROSERVICE - MAIN APPLICATION
+// ============================================================================
+package com.cognizant.loan;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class LoanApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(LoanApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 3.4 LOAN MICROSERVICE - CONTROLLER
+// ============================================================================
+package com.cognizant.loan.controller;
+
+import com.cognizant.loan.model.Loan;
+import com.cognizant.loan.service.LoanService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@Slf4j
+@RestController
+@RequestMapping("/loans")
+@RequiredArgsConstructor
+public class LoanController {
+    
+    private final LoanService loanService;
+    
+    @GetMapping("/{number}")
+    public ResponseEntity<Loan> getLoanByNumber(@PathVariable String number) {
+        log.info("Fetching loan details for number: {}", number);
+        Loan loan = loanService.getLoanByNumber(number);
+        return ResponseEntity.ok(loan);
+    }
+    
+    @PostMapping
+    public ResponseEntity<Loan> createLoan(@RequestBody Loan loan) {
+        log.info("Creating new loan: {}", loan.getNumber());
+        Loan createdLoan = loanService.createLoan(loan);
+        return ResponseEntity.ok(createdLoan);
+    }
+}
+
+// ============================================================================
+// 3.5 LOAN MICROSERVICE - MODEL
+// ============================================================================
+package com.cognizant.loan.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Loan {
+    private String number;
+    private String type;
+    private double loanAmount;
+    private double emi;
+    private int tenure;
+    private String customerName;
+    private String status;
+}
+
+// ============================================================================
+// 3.6 LOAN MICROSERVICE - SERVICE
+// ============================================================================
+package com.cognizant.loan.service;
+
+import com.cognizant.loan.model.Loan;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Service
+public class LoanService {
+    
+    // Simulated database
+    private final Map<String, Loan> loanDatabase = new HashMap<>();
+    
+    public LoanService() {
+        // Initialize with some dummy data
+        loanDatabase.put("H00987987972342", new Loan("H00987987972342", "Home", 500000.00, 3258.00, 18, "John Doe", "Active"));
+        loanDatabase.put("C00987987973456", new Loan("C00987987973456", "Car", 300000.00, 2150.00, 12, "Jane Smith", "Active"));
+        loanDatabase.put("P00987987978901", new Loan("P00987987978901", "Personal", 100000.00, 950.00, 8, "Bob Johnson", "Active"));
+    }
+    
+    public Loan getLoanByNumber(String number) {
+        log.info("Retrieving loan from database: {}", number);
+        
+        // Simulate database access delay
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        Loan loan = loanDatabase.get(number);
+        if (loan == null) {
+            log.warn("Loan not found: {}", number);
+            // Return dummy loan if not found
+            return new Loan(number, "Personal", 50000.00, 1000.00, 6, "Unknown Customer", "Active");
+        }
+        
+        return loan;
+    }
+    
+    public Loan createLoan(Loan loan) {
+        log.info("Creating loan in database: {}", loan.getNumber());
+        loanDatabase.put(loan.getNumber(), loan);
+        return loan;
+    }
+}
+
+// ============================================================================
+// PART 4: EUREKA DISCOVERY SERVER
+// ============================================================================
+
+// ============================================================================
+// 4.1 EUREKA SERVER - POM.XML
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.cognizant</groupId>
+    <artifactId>eureka-discovery-server</artifactId>
+    <version>1.0.0</version>
+    <name>eureka-discovery-server</name>
+    <description>Eureka Discovery Server</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// 4.2 EUREKA SERVER - APPLICATION.PROPERTIES
+// ============================================================================
+/*
+server.port=8761
+
+spring.application.name=eureka-discovery-server
+
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+logging.level.com.netflix.eureka=OFF
+logging.level.com.netflix.discovery=OFF
+*/
+
+// ============================================================================
+// 4.3 EUREKA SERVER - MAIN APPLICATION
+// ============================================================================
+package com.cognizant.eureka;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaDiscoveryServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaDiscoveryServerApplication.class, args);
+    }
+}
+
+// ============================================================================
+// PART 5: API GATEWAY
+// ============================================================================
+
+// ============================================================================
+// 5.1 API GATEWAY - POM.XML
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.cognizant</groupId>
+    <artifactId>api-gateway</artifactId>
+    <version>1.0.0</version>
+    <name>api-gateway</name>
+    <description>API Gateway</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// 5.2 API GATEWAY - APPLICATION.PROPERTIES
+// ============================================================================
+/*
+server.port=9090
+
+spring.application.name=api-gateway
+
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+logging.level.org.springframework.cloud.gateway=DEBUG
+logging.level.com.cognizant=DEBUG
+*/
+
+// ============================================================================
+// 5.3 API GATEWAY - MAIN APPLICATION
+// ============================================================================
+package com.cognizant.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ApiGatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ApiGatewayApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 5.4 API GATEWAY - LOG FILTER (GLOBAL FILTER)
+// ============================================================================
+package com.cognizant.gateway.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+
+/**
+ * Global Logging Filter
+ * Logs all incoming requests to the API Gateway
+ * 
+ * This filter demonstrates:
+ * - Request logging with timestamp
+ * - URI, Method, Headers logging
+ * - Response status and duration logging
+ * - Error logging
+ */
+@Slf4j
+@Component
+public class LogFilter implements GlobalFilter, Ordered {
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        long startTime = System.currentTimeMillis();
+        
+        var request = exchange.getRequest();
+        String uri = request.getURI().toString();
+        String method = request.getMethod().name();
+        String path = request.getPath().value();
+        String queryParams = request.getQueryParams().toString();
+        String headers = request.getHeaders().toString();
+        
+        // Log request details
+        log.info("""
+            \n========================================
+            API GATEWAY REQUEST
+            ========================================
+            Timestamp: {}
+            Method: {}
+            URI: {}
+            Path: {}
+            Query Params: {}
+            Headers: {}
+            ========================================
+            """,
+            LocalDateTime.now(),
+            method,
+            uri,
+            path,
+            queryParams,
+            headers
+        );
+        
+        // Proceed with the filter chain
+        return chain.filter(exchange)
+            .doOnSuccess(aVoid -> {
+                // Log response details on success
+                long duration = System.currentTimeMillis() - startTime;
+                var response = exchange.getResponse();
+                int status = response.getStatusCode() != null ? 
+                    response.getStatusCode().value() : 0;
+                    
+                log.info("""
+                    ========================================
+                    API GATEWAY RESPONSE
+                    ========================================
+                    Path: {}
+                    Status: {}
+                    Duration: {} ms
+                    ========================================
+                    """,
+                    path,
+                    status,
+                    duration
+                );
+            })
+            .doOnError(error -> {
+                // Log error details
+                long duration = System.currentTimeMillis() - startTime;
+                log.error("""
+                    ========================================
+                    API GATEWAY ERROR
+                    ========================================
+                    Path: {}
+                    Error: {}
+                    Duration: {} ms
+                    ========================================
+                    """,
+                    path,
+                    error.getMessage(),
+                    duration,
+                    error
+                );
+            });
+    }
+
+    @Override
+    public int getOrder() {
+        return -1; // Run before other filters
+    }
+}
+
+// ============================================================================
+// 5.5 API GATEWAY - CUSTOM ROUTE CONFIGURATION (OPTIONAL)
+// ============================================================================
+package com.cognizant.gateway.config;
+
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Custom Route Configuration
+ * Demonstrates programmatic route configuration with filters
+ */
+@Configuration
+public class GatewayRouteConfig {
+    
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        return builder.routes()
+            // Route for Account Service
+            .route("account_route", r -> r
+                .path("/account-service/**")
+                .filters(f -> f
+                    .addRequestHeader("X-Gateway-Route", "account-route")
+                    .addResponseHeader("X-Gateway-Response", "processed")
+                    .stripPrefix(1)
+                )
+                .uri("lb://account-service")
+            )
+            // Route for Loan Service
+            .route("loan_route", r -> r
+                .path("/loan-service/**")
+                .filters(f -> f
+                    .addRequestHeader("X-Gateway-Route", "loan-route")
+                    .addResponseHeader("X-Gateway-Response", "processed")
+                    .stripPrefix(1)
+                )
+                .uri("lb://loan-service")
+            )
+            .build();
+    }
+}
+
+// ============================================================================
+// 5.6 API GATEWAY - CUSTOM FILTER (OPTIONAL)
+// ============================================================================
+package com.cognizant.gateway.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+
+/**
+ * Custom Gateway Filter Factory
+ * Demonstrates creating custom filters with configuration
+ */
+@Slf4j
+@Component
+public class CustomLoggingFilter extends AbstractGatewayFilterFactory<CustomLoggingFilter.Config> {
+    
+    public CustomLoggingFilter() {
+        super(Config.class);
+    }
+    
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            if (config.isEnabled()) {
+                var request = exchange.getRequest();
+                log.info("Custom filter - Request: {} {}", 
+                    request.getMethod(), 
+                    request.getPath().value()
+                );
+                
+                // Add custom header
+                var modifiedRequest = request.mutate()
+                    .header("X-Custom-Filter", "Applied")
+                    .header("X-Processed-Time", LocalDateTime.now().toString())
+                    .build();
+                    
+                exchange = exchange.mutate()
+                    .request(modifiedRequest)
+                    .build();
+            }
+            
+            return chain.filter(exchange)
+                .doOnSuccess(aVoid -> {
+                    log.info("Custom filter - Response processed successfully");
+                })
+                .doOnError(error -> {
+                    log.error("Custom filter - Error: {}", error.getMessage());
+                });
+        };
+    }
+    
+    public static class Config {
+        private boolean enabled = true;
+        
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+}
+
+// ============================================================================
+// PART 6: GREET SERVICE (EXTRA)
+// ============================================================================
+
+// ============================================================================
+// 6.1 GREET SERVICE - POM.XML
+// ============================================================================
+/*
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+</dependencies>
+*/
+
+// ============================================================================
+// 6.2 GREET SERVICE - APPLICATION.PROPERTIES
+// ============================================================================
+/*
+spring.application.name=greet-service
+server.port=8083
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+*/
+
+// ============================================================================
+// 6.3 GREET SERVICE - MAIN APPLICATION
+// ============================================================================
+package com.cognizant.greet;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(GreetServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 6.4 GREET SERVICE - CONTROLLER
+// ============================================================================
+package com.cognizant.greet.controller;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@RestController
+@RequestMapping("/greet")
+public class GreetController {
+    
+    @GetMapping
+    public Map<String, String> greet(@RequestHeader(value = "X-Gateway-Route", required = false) String routeHeader) {
+        log.info("Greet service called, route header: {}", routeHeader);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Hello World!");
+        response.put("service", "greet-service");
+        response.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        
+        if (routeHeader != null) {
+            response.put("gateway-route", routeHeader);
+        }
+        
+        return response;
+    }
+    
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello from Greet Service!";
+    }
+}
+
+// ============================================================================
+// PART 7: TESTING AND VERIFICATION
+// ============================================================================
+
+/**
+ * ============================================================================
+ * TESTING THE MICROSERVICES
+ * ============================================================================
+ * 
+ * 1. Start Eureka Discovery Server:
+ *    - Run EurekaDiscoveryServerApplication
+ *    - Access: http://localhost:8761
+ *    - Verify no services registered initially
+ * 
+ * 2. Start Account Microservice:
+ *    - Run AccountApplication
+ *    - Wait for registration with Eureka
+ *    - Refresh Eureka page - Account service should appear
+ * 
+ * 3. Start Loan Microservice:
+ *    - Run LoanApplication
+ *    - Wait for registration with Eureka
+ *    - Refresh Eureka page - Both services should appear
+ * 
+ * 4. Start API Gateway:
+ *    - Run ApiGatewayApplication
+ *    - Gateway will register with Eureka
+ * 
+ * 5. Test Direct Service Access:
+ *    - Account: http://localhost:8081/accounts/ACC12345
+ *    - Loan: http://localhost:8082/loans/H00987987972342
+ * 
+ * 6. Test Through API Gateway:
+ *    - Account via Gateway: http://localhost:9090/account-service/accounts/ACC12345
+ *    - Loan via Gateway: http://localhost:9090/loan-service/loans/H00987987972342
+ * 
+ * 7. Test Greet Service:
+ *    - Direct: http://localhost:8083/greet
+ *    - Via Gateway: http://localhost:9090/greet-service/greet
+ * 
+ * 8. Check Gateway Logs:
+ *    - Each request will be logged by LogFilter
+ *    - Check console for detailed logs
+ * 
+ * ============================================================================
+ * EXPECTED RESPONSES
+ * ============================================================================
+ * 
+ * Account Service Response:
+ * {
+ *   "number": "ACC12345",
+ *   "type": "Savings",
+ *   "balance": 50000.0,
+ *   "customerName": "John Doe",
+ *   "branchCode": "BR001",
+ *   "status": "Active"
+ * }
+ * 
+ * Loan Service Response:
+ * {
+ *   "number": "H00987987972342",
+ *   "type": "Home",
+ *   "loanAmount": 500000.0,
+ *   "emi": 3258.0,
+ *   "tenure": 18,
+ *   "customerName": "John Doe",
+ *   "status": "Active"
+ * }
+ * 
+ * Greet Service Response:
+ * {
+ *   "message": "Hello World!",
+ *   "service": "greet-service",
+ *   "timestamp": "1234567890"
+ * }
+ * 
+ * ============================================================================
+ * TROUBLESHOOTING
+ * ============================================================================
+ * 
+ * 1. "Port already in use" error:
+ *    - Account: 8081, Loan: 8082, Eureka: 8761, Gateway: 9090
+ *    - Ensure ports are not already occupied
+ * 
+ * 2. Service not registered with Eureka:
+ *    - Check if Eureka server is running
+ *    - Verify service-name in application.properties
+ *    - Check network connectivity
+ * 
+ * 3. Gateway cannot route to service:
+ *    - Ensure service is registered with Eureka
+ *    - Verify service name is correct in URL
+ *    - Check gateway routes configuration
+ * 
+ * 4. "404 Not Found" error:
+ *    - Verify endpoint path is correct
+ *    - Check if service is running
+ *    - Verify route configuration
+ * 
+ * 5. "500 Internal Server Error":
+ *    - Check service logs for errors
+ *    - Verify dependencies are correct
+ *    - Check for any exceptions in service
+ * 
+ * ============================================================================
+ * KEY CONCEPTS DEMONSTRATED
+ * ============================================================================
+ * 
+ * 1. Enterprise Application Theory
+ *    - Understanding enterprise applications
+ *    - Banking services overview
+ *    - Monolithic vs Microservices architecture
+ * 
+ * 2. Microservices Implementation
+ *    - Creating independent services
+ *    - RESTful API design
+ *    - Service communication
+ * 
+ * 3. Service Discovery with Eureka
+ *    - Service registration
+ *    - Service discovery
+ *    - Health monitoring
+ * 
+ * 4. API Gateway
+ *    - Route configuration
+ *    - Global filters
+ *    - Request/Response logging
+ *    - Service routing
+ * 
+ * 5. Cross-Cutting Concerns
+ *    - Logging
+ *    - Monitoring
+ *    - Error handling
+ * 
+ * ============================================================================
+ * NEXT STEPS
+ * ============================================================================
+ * 
+ * 1. Add Database Connectivity:
+ *    - Spring Data JPA
+ *    - PostgreSQL/MySQL
+ *    - Hibernate ORM
+ * 
+ * 2. Implement Circuit Breaker:
+ *    - Resilience4j
+ *    - Fallback methods
+ *    - Fault tolerance
+ * 
+ * 3. Add Distributed Tracing:
+ *    - Spring Cloud Sleuth
+ *    - Zipkin
+ *    - Request tracking
+ * 
+ * 4. Implement Centralized Configuration:
+ *    - Spring Cloud Config Server
+ *    - Configuration management
+ *    - Environment-specific configs
+ * 
+ * 5. Add Security:
+ *    - Spring Security
+ *    - JWT Authentication
+ *    - Role-based access control
+ * 
+ * 6. Implement Metrics:
+ *    - Micrometer
+ *    - Prometheus
+ *    - Grafana dashboards
+ * 
+ * 7. Add Caching:
+ *    - Redis
+ *    - Caching strategy
+ *    - Cache invalidation
+ * 
+ * 8. Implement Event-Driven:
+ *    - Kafka/RabbitMQ
+ *    - Event sourcing
+ *    - CQRS pattern
+ * 
+ * ============================================================================
+ */
+
+// ============================================================================
+// END OF COMPLETE SOLUTION
+// ============================================================================
