@@ -1,0 +1,2497 @@
+/**
+ * ============================================================================
+ * COMPLETE MICROSERVICES WITH SPRING BOOT 3.0
+ * ============================================================================
+ * 
+ * PROJECT: Microservices Demo Application
+ * VERSION: 1.0.0
+ * JAVA: 17+
+ * SPRING BOOT: 3.1.5
+ * SPRING CLOUD: 2022.0.4
+ * 
+ * ============================================================================
+ * TABLE OF CONTENTS
+ * ============================================================================
+ * 
+ * PART 1: USER AND ORDER MANAGEMENT SYSTEM
+ *   - User Service (Port: 8081)
+ *   - Order Service (Port: 8082)
+ *   - Service Communication with WebClient and OpenFeign
+ * 
+ * PART 2: INVENTORY MANAGEMENT WITH SERVICE DISCOVERY
+ *   - Service Registry (Eureka Server - Port: 8761)
+ *   - Product Service (Port: 8083)
+ *   - Inventory Service (Port: 8084)
+ *   - Config Server (Port: 8888)
+ * 
+ * PART 3: API GATEWAY
+ *   - API Gateway (Port: 8080)
+ *   - Customer Service (Port: 8085)
+ *   - Billing Service (Port: 8086)
+ *   - Rate Limiting, Caching, Path Rewriting
+ * 
+ * PART 4: RESILIENT MICROSERVICES WITH CIRCUIT BREAKER
+ *   - Payment Service (Port: 8087)
+ *   - Third-Party API Simulation
+ *   - Resilience4j Circuit Breaker
+ *   - Fallback Logic and Monitoring
+ * 
+ * ============================================================================
+ * HOW TO USE:
+ * 1. Start Config Server first
+ * 2. Start Eureka Server
+ * 3. Start all services
+ * 4. Access Gateway: http://localhost:8080
+ * ============================================================================
+ */
+
+// ============================================================================
+// PART 1: USER AND ORDER MANAGEMENT SYSTEM
+// ============================================================================
+
+// ============================================================================
+// 1.1 USER SERVICE - pom.xml
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.example</groupId>
+    <artifactId>user-service</artifactId>
+    <version>1.0.0</version>
+    <name>User Service</name>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+*/
+
+// ============================================================================
+// 1.2 USER SERVICE - APPLICATION.YML
+// ============================================================================
+/*
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/userdb
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    com.example: DEBUG
+*/
+
+// ============================================================================
+// 1.3 USER SERVICE - MAIN APPLICATION
+// ============================================================================
+package com.example.userservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class UserServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(UserServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 1.4 USER SERVICE - ENTITY
+// ============================================================================
+package com.example.userservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private String username;
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+    
+    @Column(nullable = false)
+    private String password;
+    
+    private String firstName;
+    private String lastName;
+    private String phoneNumber;
+    
+    @Column(nullable = false)
+    private Boolean active = true;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+// ============================================================================
+// 1.5 USER SERVICE - REPOSITORY
+// ============================================================================
+package com.example.userservice.repository;
+
+import com.example.userservice.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+}
+
+// ============================================================================
+// 1.6 USER SERVICE - DTO
+// ============================================================================
+package com.example.userservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    
+    private Long id;
+    
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    private String username;
+    
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    private String email;
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
+    private String password;
+    
+    private String firstName;
+    private String lastName;
+    private String phoneNumber;
+    private Boolean active;
+}
+
+// ============================================================================
+// 1.7 USER SERVICE - CONTROLLER
+// ============================================================================
+package com.example.userservice.controller;
+
+import com.example.userservice.dto.UserDto;
+import com.example.userservice.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+    
+    private final UserService userService;
+    
+    @PostMapping
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
+        log.info("Creating user: {}", userDto.getUsername());
+        UserDto createdUser = userService.createUser(userDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
+        log.info("Fetching user with id: {}", id);
+        UserDto user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+    
+    @GetMapping("/username/{username}")
+    public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
+        log.info("Fetching user with username: {}", username);
+        UserDto user = userService.getUserByUsername(username);
+        return ResponseEntity.ok(user);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<UserDto>> getAllUsers() {
+        log.info("Fetching all users");
+        List<UserDto> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserDto userDto) {
+        log.info("Updating user with id: {}", id);
+        UserDto updatedUser = userService.updateUser(id, userDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        log.info("Deleting user with id: {}", id);
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+// ============================================================================
+// 1.8 USER SERVICE - SERVICE
+// ============================================================================
+package com.example.userservice.service;
+
+import com.example.userservice.dto.UserDto;
+import com.example.userservice.entity.User;
+import com.example.userservice.exception.ResourceNotFoundException;
+import com.example.userservice.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class UserService {
+    
+    private final UserRepository userRepository;
+    
+    public UserDto createUser(UserDto userDto) {
+        log.info("Creating new user: {}", userDto.getUsername());
+        
+        if (userRepository.existsByUsername(userDto.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        User user = mapToEntity(userDto);
+        user = userRepository.save(user);
+        log.info("User created with id: {}", user.getId());
+        
+        return mapToDto(user);
+    }
+    
+    public UserDto getUserById(Long id) {
+        log.info("Fetching user by id: {}", id);
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        return mapToDto(user);
+    }
+    
+    public UserDto getUserByUsername(String username) {
+        log.info("Fetching user by username: {}", username);
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+        return mapToDto(user);
+    }
+    
+    public List<UserDto> getAllUsers() {
+        log.info("Fetching all users");
+        return userRepository.findAll().stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public UserDto updateUser(Long id, UserDto userDto) {
+        log.info("Updating user with id: {}", id);
+        
+        User existingUser = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        
+        existingUser.setUsername(userDto.getUsername());
+        existingUser.setEmail(userDto.getEmail());
+        existingUser.setFirstName(userDto.getFirstName());
+        existingUser.setLastName(userDto.getLastName());
+        existingUser.setPhoneNumber(userDto.getPhoneNumber());
+        
+        if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+            existingUser.setPassword(userDto.getPassword());
+        }
+        
+        if (userDto.getActive() != null) {
+            existingUser.setActive(userDto.getActive());
+        }
+        
+        User updatedUser = userRepository.save(existingUser);
+        log.info("User updated with id: {}", updatedUser.getId());
+        
+        return mapToDto(updatedUser);
+    }
+    
+    public void deleteUser(Long id) {
+        log.info("Deleting user with id: {}", id);
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+        userRepository.deleteById(id);
+        log.info("User deleted with id: {}", id);
+    }
+    
+    private User mapToEntity(UserDto userDto) {
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(userDto.getPassword());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setPhoneNumber(userDto.getPhoneNumber());
+        user.setActive(userDto.getActive() != null ? userDto.getActive() : true);
+        return user;
+    }
+    
+    private UserDto mapToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setActive(user.getActive());
+        return dto;
+    }
+}
+
+// ============================================================================
+// 1.9 USER SERVICE - EXCEPTION HANDLER
+// ============================================================================
+package com.example.userservice.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "An unexpected error occurred: " + ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+}
+
+class ErrorResponse {
+    private int status;
+    private String message;
+    private LocalDateTime timestamp;
+    
+    public ErrorResponse(int status, String message, LocalDateTime timestamp) {
+        this.status = status;
+        this.message = message;
+        this.timestamp = timestamp;
+    }
+    
+    // Getters and setters
+    public int getStatus() { return status; }
+    public String getMessage() { return message; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+}
+
+class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}
+
+// ============================================================================
+// 1.10 ORDER SERVICE - POM.XML
+// ============================================================================
+/*
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+</dependencies>
+*/
+
+// ============================================================================
+// 1.11 ORDER SERVICE - MAIN APPLICATION
+// ============================================================================
+package com.example.orderservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class OrderServiceApplication {
+    
+    public static void main(String[] args) {
+        SpringApplication.run(OrderServiceApplication.class, args);
+    }
+    
+    @Bean
+    public WebClient webClient() {
+        return WebClient.builder().build();
+    }
+}
+
+// ============================================================================
+// 1.12 ORDER SERVICE - ENTITY
+// ============================================================================
+package com.example.orderservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Order {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private Long userId;
+    
+    @Column(nullable = false)
+    private String orderNumber;
+    
+    @Column(nullable = false)
+    private BigDecimal totalAmount;
+    
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.PENDING;
+    
+    private String shippingAddress;
+    private String paymentMethod;
+    
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private List<OrderItem> items = new ArrayList<>();
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+@Entity
+@Table(name = "order_items")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItem {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private Long productId;
+    private Integer quantity;
+    private BigDecimal price;
+    private BigDecimal totalPrice;
+}
+
+enum OrderStatus {
+    PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+}
+
+// ============================================================================
+// 1.13 ORDER SERVICE - REPOSITORY
+// ============================================================================
+package com.example.orderservice.repository;
+
+import com.example.orderservice.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface OrderRepository extends JpaRepository<Order, Long> {
+    List<Order> findByUserId(Long userId);
+    Order findByOrderNumber(String orderNumber);
+}
+
+// ============================================================================
+// 1.14 ORDER SERVICE - FEIGN CLIENT FOR USER SERVICE
+// ============================================================================
+package com.example.orderservice.client;
+
+import com.example.orderservice.dto.UserDto;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(name = "user-service", url = "${user.service.url:http://localhost:8081}")
+public interface UserServiceClient {
+    
+    @GetMapping("/api/users/{id}")
+    UserDto getUserById(@PathVariable("id") Long id);
+    
+    @GetMapping("/api/users/username/{username}")
+    UserDto getUserByUsername(@PathVariable("username") String username);
+}
+
+// ============================================================================
+// 1.15 ORDER SERVICE - DTO
+// ============================================================================
+package com.example.orderservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderDto {
+    private Long id;
+    private Long userId;
+    private String orderNumber;
+    private BigDecimal totalAmount;
+    private String status;
+    private String shippingAddress;
+    private String paymentMethod;
+    private List<OrderItemDto> items;
+    private LocalDateTime createdAt;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItemDto {
+    private Long productId;
+    private Integer quantity;
+    private BigDecimal price;
+    private BigDecimal totalPrice;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderRequest {
+    private Long userId;
+    private String shippingAddress;
+    private String paymentMethod;
+    private List<OrderItemDto> items;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private Long id;
+    private String username;
+    private String email;
+    private String firstName;
+    private String lastName;
+}
+
+// ============================================================================
+// 1.16 ORDER SERVICE - CONTROLLER
+// ============================================================================
+package com.example.orderservice.controller;
+
+import com.example.orderservice.dto.OrderDto;
+import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.service.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/orders")
+@RequiredArgsConstructor
+public class OrderController {
+    
+    private final OrderService orderService;
+    
+    @PostMapping
+    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody OrderRequest orderRequest) {
+        log.info("Creating order for user: {}", orderRequest.getUserId());
+        OrderDto order = orderService.createOrder(orderRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderDto> getOrderById(@PathVariable Long id) {
+        log.info("Fetching order with id: {}", id);
+        OrderDto order = orderService.getOrderById(id);
+        return ResponseEntity.ok(order);
+    }
+    
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderDto>> getOrdersByUser(@PathVariable Long userId) {
+        log.info("Fetching orders for user: {}", userId);
+        List<OrderDto> orders = orderService.getOrdersByUser(userId);
+        return ResponseEntity.ok(orders);
+    }
+    
+    @GetMapping("/number/{orderNumber}")
+    public ResponseEntity<OrderDto> getOrderByNumber(@PathVariable String orderNumber) {
+        log.info("Fetching order with number: {}", orderNumber);
+        OrderDto order = orderService.getOrderByNumber(orderNumber);
+        return ResponseEntity.ok(order);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<OrderDto>> getAllOrders() {
+        log.info("Fetching all orders");
+        List<OrderDto> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
+    }
+    
+    @PutMapping("/{id}/status")
+    public ResponseEntity<OrderDto> updateOrderStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        log.info("Updating order status for id: {} to {}", id, status);
+        OrderDto order = orderService.updateOrderStatus(id, status);
+        return ResponseEntity.ok(order);
+    }
+}
+
+// ============================================================================
+// 1.17 ORDER SERVICE - SERVICE WITH WEBCLIENT AND FEIGN
+// ============================================================================
+package com.example.orderservice.service;
+
+import com.example.orderservice.client.UserServiceClient;
+import com.example.orderservice.dto.OrderDto;
+import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.UserDto;
+import com.example.orderservice.entity.Order;
+import com.example.orderservice.entity.OrderItem;
+import com.example.orderservice.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class OrderService {
+    
+    private final OrderRepository orderRepository;
+    private final UserServiceClient userServiceClient;
+    private final WebClient webClient;
+    
+    public OrderDto createOrder(OrderRequest orderRequest) {
+        log.info("Creating order for user: {}", orderRequest.getUserId());
+        
+        // Validate user exists using Feign Client
+        UserDto user = userServiceClient.getUserById(orderRequest.getUserId());
+        log.info("User found: {}", user.getUsername());
+        
+        // Alternatively, use WebClient to call user service
+        // UserDto user = webClient.get()
+        //     .uri("http://user-service/api/users/{id}", orderRequest.getUserId())
+        //     .retrieve()
+        //     .bodyToMono(UserDto.class)
+        //     .block();
+        
+        // Create order
+        Order order = new Order();
+        order.setUserId(orderRequest.getUserId());
+        order.setOrderNumber(generateOrderNumber());
+        order.setShippingAddress(orderRequest.getShippingAddress());
+        order.setPaymentMethod(orderRequest.getPaymentMethod());
+        
+        // Process items
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<OrderItem> items = orderRequest.getItems().stream()
+            .map(itemDto -> {
+                OrderItem item = new OrderItem();
+                item.setProductId(itemDto.getProductId());
+                item.setQuantity(itemDto.getQuantity());
+                item.setPrice(itemDto.getPrice());
+                item.setTotalPrice(itemDto.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
+                totalAmount.add(item.getTotalPrice());
+                return item;
+            })
+            .collect(Collectors.toList());
+        
+        order.setItems(items);
+        order.setTotalAmount(totalAmount);
+        order.setStatus(OrderStatus.PENDING);
+        
+        // Save order
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order created with id: {}, number: {}", savedOrder.getId(), savedOrder.getOrderNumber());
+        
+        // Process payment (in real scenario, call payment service)
+        processPayment(savedOrder);
+        
+        return mapToDto(savedOrder);
+    }
+    
+    public OrderDto getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+        return mapToDto(order);
+    }
+    
+    public List<OrderDto> getOrdersByUser(Long userId) {
+        List<Order> orders = orderRepository.findByUserId(userId);
+        return orders.stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public OrderDto getOrderByNumber(String orderNumber) {
+        Order order = orderRepository.findByOrderNumber(orderNumber);
+        if (order == null) {
+            throw new RuntimeException("Order not found with number: " + orderNumber);
+        }
+        return mapToDto(order);
+    }
+    
+    public List<OrderDto> getAllOrders() {
+        return orderRepository.findAll().stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public OrderDto updateOrderStatus(Long id, String status) {
+        Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+        
+        order.setStatus(OrderStatus.valueOf(status));
+        Order updatedOrder = orderRepository.save(order);
+        log.info("Order status updated: {} -> {}", id, status);
+        
+        return mapToDto(updatedOrder);
+    }
+    
+    private String generateOrderNumber() {
+        return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+    
+    private void processPayment(Order order) {
+        // Simulate payment processing
+        log.info("Processing payment for order: {}", order.getOrderNumber());
+        // In real scenario, call payment service here
+    }
+    
+    private OrderDto mapToDto(Order order) {
+        OrderDto dto = new OrderDto();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setOrderNumber(order.getOrderNumber());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setStatus(order.getStatus().name());
+        dto.setShippingAddress(order.getShippingAddress());
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setCreatedAt(order.getCreatedAt());
+        
+        List<OrderItemDto> itemDtos = order.getItems().stream()
+            .map(item -> {
+                OrderItemDto itemDto = new OrderItemDto();
+                itemDto.setProductId(item.getProductId());
+                itemDto.setQuantity(item.getQuantity());
+                itemDto.setPrice(item.getPrice());
+                itemDto.setTotalPrice(item.getTotalPrice());
+                return itemDto;
+            })
+            .collect(Collectors.toList());
+        dto.setItems(itemDtos);
+        
+        return dto;
+    }
+}
+
+// ============================================================================
+// PART 2: INVENTORY MANAGEMENT WITH SERVICE DISCOVERY
+// ============================================================================
+
+// ============================================================================
+// 2.1 EUREKA SERVER - APPLICATION
+// ============================================================================
+package com.example.eurekaserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaServerApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 2.2 EUREKA SERVER - APPLICATION.YML
+// ============================================================================
+/*
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: true
+    eviction-interval-timer-in-ms: 60000
+  instance:
+    hostname: localhost
+*/
+
+// ============================================================================
+// 2.3 CONFIG SERVER - APPLICATION
+// ============================================================================
+package com.example.configserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 2.4 CONFIG SERVER - APPLICATION.YML
+// ============================================================================
+/*
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/your-repo/config-repo
+          default-label: main
+          search-paths: '{application}'
+          
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+*/
+
+// ============================================================================
+// 2.5 PRODUCT SERVICE - APPLICATION
+// ============================================================================
+package com.example.productservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ProductServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ProductServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 2.6 PRODUCT SERVICE - ENTITY
+// ============================================================================
+package com.example.productservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "products")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Product {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    @Column(nullable = false, unique = true)
+    private String sku;
+    
+    private String description;
+    
+    @Column(nullable = false)
+    private BigDecimal price;
+    
+    @Column(nullable = false)
+    private Integer stockQuantity;
+    
+    private String category;
+    private String brand;
+    
+    @Column(nullable = false)
+    private Boolean active = true;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+// ============================================================================
+// 2.7 PRODUCT SERVICE - REPOSITORY
+// ============================================================================
+package com.example.productservice.repository;
+
+import com.example.productservice.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    Optional<Product> findBySku(String sku);
+    List<Product> findByCategory(String category);
+    List<Product> findByActiveTrue();
+}
+
+// ============================================================================
+// 2.8 PRODUCT SERVICE - CONTROLLER
+// ============================================================================
+package com.example.productservice.controller;
+
+import com.example.productservice.dto.ProductDto;
+import com.example.productservice.dto.StockUpdateRequest;
+import com.example.productservice.service.ProductService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+public class ProductController {
+    
+    private final ProductService productService;
+    
+    @PostMapping
+    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
+        log.info("Creating product: {}", productDto.getName());
+        ProductDto product = productService.createProduct(productDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(product);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
+        log.info("Fetching product by id: {}", id);
+        ProductDto product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
+    }
+    
+    @GetMapping("/sku/{sku}")
+    public ResponseEntity<ProductDto> getProductBySku(@PathVariable String sku) {
+        log.info("Fetching product by sku: {}", sku);
+        ProductDto product = productService.getProductBySku(sku);
+        return ResponseEntity.ok(product);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
+        log.info("Fetching all products");
+        List<ProductDto> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+    
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<ProductDto>> getProductsByCategory(@PathVariable String category) {
+        log.info("Fetching products by category: {}", category);
+        List<ProductDto> products = productService.getProductsByCategory(category);
+        return ResponseEntity.ok(products);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto productDto) {
+        log.info("Updating product with id: {}", id);
+        ProductDto product = productService.updateProduct(id, productDto);
+        return ResponseEntity.ok(product);
+    }
+    
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<ProductDto> updateStock(@PathVariable Long id, @RequestBody StockUpdateRequest request) {
+        log.info("Updating stock for product: {} to {}", id, request.getQuantity());
+        ProductDto product = productService.updateStock(id, request.getQuantity());
+        return ResponseEntity.ok(product);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        log.info("Deleting product with id: {}", id);
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+// ============================================================================
+// 2.9 PRODUCT SERVICE - DTO
+// ============================================================================
+package com.example.productservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductDto {
+    private Long id;
+    
+    @NotBlank(message = "Product name is required")
+    private String name;
+    
+    @NotBlank(message = "SKU is required")
+    private String sku;
+    
+    private String description;
+    
+    @NotNull(message = "Price is required")
+    @Min(value = 0, message = "Price must be greater than or equal to 0")
+    private BigDecimal price;
+    
+    @NotNull(message = "Stock quantity is required")
+    @Min(value = 0, message = "Stock quantity must be greater than or equal to 0")
+    private Integer stockQuantity;
+    
+    private String category;
+    private String brand;
+    private Boolean active;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockUpdateRequest {
+    private Integer quantity;
+}
+
+// ============================================================================
+// 2.10 PRODUCT SERVICE - SERVICE
+// ============================================================================
+package com.example.productservice.service;
+
+import com.example.productservice.dto.ProductDto;
+import com.example.productservice.entity.Product;
+import com.example.productservice.exception.ResourceNotFoundException;
+import com.example.productservice.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ProductService {
+    
+    private final ProductRepository productRepository;
+    
+    public ProductDto createProduct(ProductDto productDto) {
+        log.info("Creating new product: {}", productDto.getName());
+        
+        if (productRepository.findBySku(productDto.getSku()).isPresent()) {
+            throw new RuntimeException("Product with SKU already exists: " + productDto.getSku());
+        }
+        
+        Product product = mapToEntity(productDto);
+        product = productRepository.save(product);
+        log.info("Product created with id: {}, sku: {}", product.getId(), product.getSku());
+        
+        return mapToDto(product);
+    }
+    
+    public ProductDto getProductById(Long id) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        return mapToDto(product);
+    }
+    
+    public ProductDto getProductBySku(String sku) {
+        Product product = productRepository.findBySku(sku)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with sku: " + sku));
+        return mapToDto(product);
+    }
+    
+    public List<ProductDto> getAllProducts() {
+        return productRepository.findAll().stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public List<ProductDto> getProductsByCategory(String category) {
+        return productRepository.findByCategory(category).stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public ProductDto updateProduct(Long id, ProductDto productDto) {
+        Product existingProduct = productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        existingProduct.setName(productDto.getName());
+        existingProduct.setDescription(productDto.getDescription());
+        existingProduct.setPrice(productDto.getPrice());
+        existingProduct.setCategory(productDto.getCategory());
+        existingProduct.setBrand(productDto.getBrand());
+        existingProduct.setActive(productDto.getActive() != null ? productDto.getActive() : true);
+        
+        Product updatedProduct = productRepository.save(existingProduct);
+        log.info("Product updated with id: {}", updatedProduct.getId());
+        
+        return mapToDto(updatedProduct);
+    }
+    
+    public ProductDto updateStock(Long id, Integer quantity) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        product.setStockQuantity(quantity);
+        Product updatedProduct = productRepository.save(product);
+        log.info("Stock updated for product: {} to {}", id, quantity);
+        
+        return mapToDto(updatedProduct);
+    }
+    
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
+        productRepository.deleteById(id);
+        log.info("Product deleted with id: {}", id);
+    }
+    
+    private Product mapToEntity(ProductDto dto) {
+        Product product = new Product();
+        product.setName(dto.getName());
+        product.setSku(dto.getSku());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setStockQuantity(dto.getStockQuantity());
+        product.setCategory(dto.getCategory());
+        product.setBrand(dto.getBrand());
+        product.setActive(dto.getActive() != null ? dto.getActive() : true);
+        return product;
+    }
+    
+    private ProductDto mapToDto(Product product) {
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setSku(product.getSku());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        dto.setCategory(product.getCategory());
+        dto.setBrand(product.getBrand());
+        dto.setActive(product.getActive());
+        return dto;
+    }
+}
+
+// ============================================================================
+// 2.11 INVENTORY SERVICE - APPLICATION
+// ============================================================================
+package com.example.inventoryservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class InventoryServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(InventoryServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 2.12 INVENTORY SERVICE - ENTITY
+// ============================================================================
+package com.example.inventoryservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "inventory")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Inventory {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private Long productId;
+    
+    @Column(nullable = false)
+    private Integer stockQuantity = 0;
+    
+    @Column(nullable = false)
+    private Integer reservedQuantity = 0;
+    
+    @Column(nullable = false)
+    private Integer availableQuantity = 0;
+    
+    private Integer reorderLevel = 10;
+    
+    private String location;
+    
+    private LocalDateTime lastUpdatedAt;
+    
+    @PreUpdate
+    protected void onUpdate() {
+        lastUpdatedAt = LocalDateTime.now();
+    }
+}
+
+// ============================================================================
+// 2.13 INVENTORY SERVICE - REPOSITORY
+// ============================================================================
+package com.example.inventoryservice.repository;
+
+import com.example.inventoryservice.entity.Inventory;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface InventoryRepository extends JpaRepository<Inventory, Long> {
+    Optional<Inventory> findByProductId(Long productId);
+    List<Inventory> findByStockQuantityLessThanEqual(Integer threshold);
+}
+
+// ============================================================================
+// 2.14 INVENTORY SERVICE - CLIENT FOR PRODUCT SERVICE
+// ============================================================================
+package com.example.inventoryservice.client;
+
+import com.example.inventoryservice.dto.ProductDto;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(name = "product-service", url = "${product.service.url:http://localhost:8083}")
+public interface ProductServiceClient {
+    
+    @GetMapping("/api/products/{id}")
+    ProductDto getProductById(@PathVariable("id") Long id);
+    
+    @GetMapping("/api/products/sku/{sku}")
+    ProductDto getProductBySku(@PathVariable("sku") String sku);
+}
+
+// ============================================================================
+// 2.15 INVENTORY SERVICE - CONTROLLER
+// ============================================================================
+package com.example.inventoryservice.controller;
+
+import com.example.inventoryservice.dto.InventoryDto;
+import com.example.inventoryservice.dto.InventoryUpdateRequest;
+import com.example.inventoryservice.service.InventoryService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/inventory")
+@RequiredArgsConstructor
+public class InventoryController {
+    
+    private final InventoryService inventoryService;
+    
+    @PostMapping
+    public ResponseEntity<InventoryDto> createInventory(@RequestBody InventoryDto inventoryDto) {
+        log.info("Creating inventory for product: {}", inventoryDto.getProductId());
+        InventoryDto inventory = inventoryService.createInventory(inventoryDto);
+        return ResponseEntity.ok(inventory);
+    }
+    
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<InventoryDto> getInventoryByProduct(@PathVariable Long productId) {
+        log.info("Fetching inventory for product: {}", productId);
+        InventoryDto inventory = inventoryService.getInventoryByProduct(productId);
+        return ResponseEntity.ok(inventory);
+    }
+    
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<InventoryDto>> getLowStockItems(@RequestParam(defaultValue = "10") Integer threshold) {
+        log.info("Fetching low stock items with threshold: {}", threshold);
+        List<InventoryDto> items = inventoryService.getLowStockItems(threshold);
+        return ResponseEntity.ok(items);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<InventoryDto> updateInventory(@PathVariable Long id, @RequestBody InventoryUpdateRequest request) {
+        log.info("Updating inventory for id: {}", id);
+        InventoryDto inventory = inventoryService.updateInventory(id, request);
+        return ResponseEntity.ok(inventory);
+    }
+    
+    @PostMapping("/reserve")
+    public ResponseEntity<InventoryDto> reserveStock(@RequestBody InventoryUpdateRequest request) {
+        log.info("Reserving stock for product: {}", request.getProductId());
+        InventoryDto inventory = inventoryService.reserveStock(request);
+        return ResponseEntity.ok(inventory);
+    }
+    
+    @PostMapping("/release")
+    public ResponseEntity<InventoryDto> releaseStock(@RequestBody InventoryUpdateRequest request) {
+        log.info("Releasing stock for product: {}", request.getProductId());
+        InventoryDto inventory = inventoryService.releaseStock(request);
+        return ResponseEntity.ok(inventory);
+    }
+}
+
+// ============================================================================
+// 2.16 INVENTORY SERVICE - SERVICE
+// ============================================================================
+package com.example.inventoryservice.service;
+
+import com.example.inventoryservice.client.ProductServiceClient;
+import com.example.inventoryservice.dto.InventoryDto;
+import com.example.inventoryservice.dto.InventoryUpdateRequest;
+import com.example.inventoryservice.dto.ProductDto;
+import com.example.inventoryservice.entity.Inventory;
+import com.example.inventoryservice.exception.ResourceNotFoundException;
+import com.example.inventoryservice.repository.InventoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class InventoryService {
+    
+    private final InventoryRepository inventoryRepository;
+    private final ProductServiceClient productServiceClient;
+    
+    public InventoryDto createInventory(InventoryDto inventoryDto) {
+        log.info("Creating inventory for product: {}", inventoryDto.getProductId());
+        
+        // Verify product exists
+        ProductDto product = productServiceClient.getProductById(inventoryDto.getProductId());
+        log.info("Product found: {}", product.getName());
+        
+        if (inventoryRepository.findByProductId(inventoryDto.getProductId()).isPresent()) {
+            throw new RuntimeException("Inventory already exists for product: " + inventoryDto.getProductId());
+        }
+        
+        Inventory inventory = mapToEntity(inventoryDto);
+        inventory.setAvailableQuantity(inventory.getStockQuantity() - inventory.getReservedQuantity());
+        inventory = inventoryRepository.save(inventory);
+        
+        log.info("Inventory created for product: {}", inventory.getProductId());
+        return mapToDto(inventory);
+    }
+    
+    public InventoryDto getInventoryByProduct(Long productId) {
+        Inventory inventory = inventoryRepository.findByProductId(productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product: " + productId));
+        return mapToDto(inventory);
+    }
+    
+    public List<InventoryDto> getLowStockItems(Integer threshold) {
+        return inventoryRepository.findByStockQuantityLessThanEqual(threshold).stream()
+            .map(this::mapToDto)
+            .collect(Collectors.toList());
+    }
+    
+    public InventoryDto updateInventory(Long id, InventoryUpdateRequest request) {
+        Inventory inventory = inventoryRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory not found with id: " + id));
+        
+        inventory.setStockQuantity(request.getQuantity());
+        inventory.setAvailableQuantity(inventory.getStockQuantity() - inventory.getReservedQuantity());
+        
+        if (request.getLocation() != null) {
+            inventory.setLocation(request.getLocation());
+        }
+        
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        log.info("Inventory updated for id: {}", id);
+        
+        return mapToDto(updatedInventory);
+    }
+    
+    public InventoryDto reserveStock(InventoryUpdateRequest request) {
+        Inventory inventory = inventoryRepository.findByProductId(request.getProductId())
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product: " + request.getProductId()));
+        
+        if (inventory.getAvailableQuantity() < request.getQuantity()) {
+            throw new RuntimeException("Insufficient stock. Available: " + inventory.getAvailableQuantity());
+        }
+        
+        inventory.setReservedQuantity(inventory.getReservedQuantity() + request.getQuantity());
+        inventory.setAvailableQuantity(inventory.getStockQuantity() - inventory.getReservedQuantity());
+        
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        log.info("Stock reserved for product: {}, quantity: {}", request.getProductId(), request.getQuantity());
+        
+        return mapToDto(updatedInventory);
+    }
+    
+    public InventoryDto releaseStock(InventoryUpdateRequest request) {
+        Inventory inventory = inventoryRepository.findByProductId(request.getProductId())
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product: " + request.getProductId()));
+        
+        inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - request.getQuantity()));
+        inventory.setAvailableQuantity(inventory.getStockQuantity() - inventory.getReservedQuantity());
+        
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        log.info("Stock released for product: {}, quantity: {}", request.getProductId(), request.getQuantity());
+        
+        return mapToDto(updatedInventory);
+    }
+    
+    private Inventory mapToEntity(InventoryDto dto) {
+        Inventory inventory = new Inventory();
+        inventory.setProductId(dto.getProductId());
+        inventory.setStockQuantity(dto.getStockQuantity());
+        inventory.setReservedQuantity(dto.getReservedQuantity() != null ? dto.getReservedQuantity() : 0);
+        inventory.setAvailableQuantity(dto.getAvailableQuantity() != null ? dto.getAvailableQuantity() : 
+            inventory.getStockQuantity() - inventory.getReservedQuantity());
+        inventory.setLocation(dto.getLocation());
+        return inventory;
+    }
+    
+    private InventoryDto mapToDto(Inventory inventory) {
+        InventoryDto dto = new InventoryDto();
+        dto.setId(inventory.getId());
+        dto.setProductId(inventory.getProductId());
+        dto.setStockQuantity(inventory.getStockQuantity());
+        dto.setReservedQuantity(inventory.getReservedQuantity());
+        dto.setAvailableQuantity(inventory.getAvailableQuantity());
+        dto.setLocation(inventory.getLocation());
+        return dto;
+    }
+}
+
+// ============================================================================
+// 2.17 INVENTORY SERVICE - DTO
+// ============================================================================
+package com.example.inventoryservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class InventoryDto {
+    private Long id;
+    private Long productId;
+    private Integer stockQuantity;
+    private Integer reservedQuantity;
+    private Integer availableQuantity;
+    private String location;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class InventoryUpdateRequest {
+    private Long productId;
+    private Integer quantity;
+    private String location;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductDto {
+    private Long id;
+    private String name;
+    private String sku;
+    private String description;
+    private BigDecimal price;
+    private Integer stockQuantity;
+    private String category;
+    private String brand;
+    private Boolean active;
+}
+
+// ============================================================================
+// PART 3: API GATEWAY
+// ============================================================================
+
+// ============================================================================
+// 3.1 API GATEWAY - APPLICATION
+// ============================================================================
+package com.example.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ApiGatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ApiGatewayApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 3.2 API GATEWAY - APPLICATION.YML
+// ============================================================================
+/*
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - name: GlobalLoggingFilter
+        - name: RequestRateLimiter
+          args:
+            key-resolver: "#{@userKeyResolver}"
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+      
+      routes:
+        # Customer Service Routes
+        - id: customer_service
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/customers/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: customerServiceCircuitBreaker
+                fallbackUri: forward:/fallback/customers
+            - name: Retry
+              args:
+                retries: 3
+                statuses: 500
+                methods: GET
+            - AddRequestHeader=X-Route-Header, Customer-Service
+            - AddResponseHeader=X-Route-Response, Processed
+        
+        # Billing Service Routes
+        - id: billing_service
+          uri: lb://billing-service
+          predicates:
+            - Path=/api/billing/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: billingServiceCircuitBreaker
+                fallbackUri: forward:/fallback/billing
+            - name: Retry
+              args:
+                retries: 2
+                statuses: 500,503
+                methods: GET,POST
+            - AddRequestHeader=X-Route-Header, Billing-Service
+            - AddResponseHeader=X-Route-Response, Processed
+        
+        # Cache enabled route
+        - id: cached_route
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/cached/**
+          filters:
+            - StripPrefix=1
+            - name: CacheRequestFilter
+            - name: CircuitBreaker
+              args:
+                name: cacheCircuitBreaker
+                fallbackUri: forward:/fallback/cached
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      customerServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      billingServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+*/
+
+// ============================================================================
+// 3.3 API GATEWAY - FILTERS
+// ============================================================================
+package com.example.gateway.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@Slf4j
+@Component
+public class GlobalLoggingFilter implements GlobalFilter, Ordered {
+    
+    private final AtomicInteger requestCounter = new AtomicInteger(0);
+    private final ConcurrentHashMap<String, AtomicInteger> pathCounters = new ConcurrentHashMap<>();
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        long startTime = System.currentTimeMillis();
+        int requestId = requestCounter.incrementAndGet();
+        String path = exchange.getRequest().getPath().value();
+        
+        // Increment path counter
+        pathCounters.computeIfAbsent(path, k -> new AtomicInteger(0)).incrementAndGet();
+        
+        log.info("Gateway Request #{}: {} {}", requestId, exchange.getRequest().getMethod(), path);
+        
+        return chain.filter(exchange)
+            .doOnSuccess(aVoid -> {
+                long duration = System.currentTimeMillis() - startTime;
+                int status = exchange.getResponse().getStatusCode() != null ? 
+                    exchange.getResponse().getStatusCode().value() : 0;
+                log.info("Gateway Response #{}: Status {}, Duration: {}ms", 
+                    requestId, status, duration);
+            })
+            .doOnError(error -> {
+                log.error("Gateway Error #{}: {}", requestId, error.getMessage(), error);
+            });
+    }
+
+    @Override
+    public int getOrder() {
+        return -1;
+    }
+}
+
+// ============================================================================
+// 3.4 API GATEWAY - CUSTOM FILTERS
+// ============================================================================
+package com.example.gateway.filter;
+
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+
+import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component
+public class CacheRequestFilter extends AbstractGatewayFilterFactory<Object> {
+    
+    private final ConcurrentHashMap<String, CachedResponse> cache = new ConcurrentHashMap<>();
+    private final Duration cacheDuration = Duration.ofMinutes(5);
+
+    public CacheRequestFilter() {
+        super(Object.class);
+    }
+
+    @Override
+    public GatewayFilter apply(Object config) {
+        return (exchange, chain) -> {
+            String key = generateCacheKey(exchange);
+            
+            // Check cache
+            CachedResponse cached = cache.get(key);
+            if (cached != null && !cached.isExpired()) {
+                exchange.getResponse().setStatusCode(HttpStatus.OK);
+                exchange.getResponse().getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
+                exchange.getResponse().getHeaders().add("X-Cache", "HIT");
+                
+                // Create response from cache
+                byte[] responseBytes = cached.getResponse();
+                return exchange.getResponse()
+                    .writeWith(Mono.just(exchange.getResponse()
+                        .bufferFactory()
+                        .wrap(responseBytes)));
+            }
+            
+            // Continue to downstream service
+            return chain.filter(exchange)
+                .doOnSuccess(aVoid -> {
+                    // Cache response
+                    if (exchange.getResponse().getStatusCode() == HttpStatus.OK) {
+                        // Cache for future requests
+                        // In real implementation, you would cache the response body
+                        // This is simplified
+                        cache.put(key, new CachedResponse(
+                            "".getBytes(),
+                            System.currentTimeMillis() + cacheDuration.toMillis()
+                        ));
+                    }
+                });
+        };
+    }
+    
+    private String generateCacheKey(ServerWebExchange exchange) {
+        return exchange.getRequest().getMethod().name() + ":" + 
+               exchange.getRequest().getPath().value() + ":" +
+               exchange.getRequest().getQueryParams().toString();
+    }
+    
+    private static class CachedResponse {
+        private final byte[] response;
+        private final long expiryTime;
+        
+        public CachedResponse(byte[] response, long expiryTime) {
+            this.response = response;
+            this.expiryTime = expiryTime;
+        }
+        
+        public byte[] getResponse() { return response; }
+        public boolean isExpired() { return System.currentTimeMillis() > expiryTime; }
+    }
+}
+
+// ============================================================================
+// 3.5 API GATEWAY - KEY RESOLVER
+// ============================================================================
+package com.example.gateway.config;
+
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import reactor.core.publisher.Mono;
+
+@Configuration
+public class RateLimiterConfig {
+    
+    @Bean
+    public KeyResolver userKeyResolver() {
+        return exchange -> {
+            var request = exchange.getRequest();
+            String userId = request.getHeaders().getFirst("X-User-Id");
+            if (userId != null) {
+                return Mono.just(userId);
+            }
+            String clientIp = request.getRemoteAddress().getAddress().getHostAddress();
+            return Mono.just(clientIp);
+        };
+    }
+    
+    @Bean
+    public KeyResolver apiKeyResolver() {
+        return exchange -> {
+            String path = exchange.getRequest().getPath().value();
+            String method = exchange.getRequest().getMethod().name();
+            return Mono.just(method + ":" + path);
+        };
+    }
+}
+
+// ============================================================================
+// 3.6 CUSTOMER SERVICE - APPLICATION
+// ============================================================================
+package com.example.customerservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class CustomerServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(CustomerServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 3.7 CUSTOMER SERVICE - ENTITY
+// ============================================================================
+package com.example.customerservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "customers")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Customer {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String firstName;
+    
+    @Column(nullable = false)
+    private String lastName;
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+    
+    private String phone;
+    private String address;
+    private String city;
+    private String state;
+    private String zipCode;
+    private String country;
+    
+    @Column(nullable = false)
+    private Boolean active = true;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+// ============================================================================
+// 3.8 BILLING SERVICE - APPLICATION
+// ============================================================================
+package com.example.billingservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class BillingServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BillingServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 3.9 BILLING SERVICE - ENTITY
+// ============================================================================
+package com.example.billingservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "bills")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Bill {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private Long customerId;
+    
+    @Column(nullable = false, unique = true)
+    private String billNumber;
+    
+    @Column(nullable = false)
+    private BigDecimal amount;
+    
+    private String description;
+    
+    @Enumerated(EnumType.STRING)
+    private BillStatus status = BillStatus.PENDING;
+    
+    private LocalDateTime dueDate;
+    private LocalDateTime paidDate;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+enum BillStatus {
+    PENDING, PAID, OVERDUE, CANCELLED
+}
+
+// ============================================================================
+// PART 4: RESILIENT MICROSERVICES WITH CIRCUIT BREAKER
+// ============================================================================
+
+// ============================================================================
+// 4.1 PAYMENT SERVICE - APPLICATION
+// ============================================================================
+package com.example.paymentservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class PaymentServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(PaymentServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 4.2 PAYMENT SERVICE - APPLICATION.YML
+// ============================================================================
+/*
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/paymentdb
+    username: postgres
+    password: password
+
+server:
+  port: 8087
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        eventConsumerBufferSize: 10
+      paymentCircuitBreaker:
+        slidingWindowSize: 20
+        failureRateThreshold: 40
+        waitDurationInOpenState: 10s
+    instances:
+      thirdPartyPayment:
+        baseConfig: paymentCircuitBreaker
+      
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      paymentRetry:
+        maxAttempts: 5
+        waitDuration: 2s
+  
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 3s
+    instances:
+      default:
+        timeoutDuration: 3s
+
+logging:
+  level:
+    com.example: DEBUG
+    io.github.resilience4j: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+*/
+
+// ============================================================================
+// 4.3 PAYMENT SERVICE - ENTITY
+// ============================================================================
+package com.example.paymentservice.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Payment {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private Long orderId;
+    
+    @Column(nullable = false)
+    private Long userId;
+    
+    @Column(nullable = false)
+    private BigDecimal amount;
+    
+    private String paymentMethod;
+    private String transactionId;
+    
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status = PaymentStatus.PENDING;
+    
+    private String failureReason;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+
+enum PaymentStatus {
+    PENDING, SUCCESS, FAILED, REFUNDED
+}
+
+// ============================================================================
+// 4.4 PAYMENT SERVICE - DTO
+// ============================================================================
+package com.example.paymentservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentRequest {
+    private Long orderId;
+    private Long userId;
+    private BigDecimal amount;
+    private String paymentMethod;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentResponse {
+    private Long id;
+    private Long orderId;
+    private String status;
+    private String transactionId;
+    private String message;
+    private boolean success;
+}
+
+// ============================================================================
+// 4.5 PAYMENT SERVICE - THIRD PARTY SERVICE SIMULATION
+// ============================================================================
+package com.example.paymentservice.service;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+@Slf4j
+@Service
+public class ThirdPartyPaymentService {
+    
+    private final Random random = new Random();
+    private final int failureRate = 40; // 40% failure rate for simulation
+    
+    public String processPayment(String orderId, BigDecimal amount) throws Exception {
+        log.info("Processing payment with third party service: Order {}, Amount: {}", orderId, amount);
+        
+        // Simulate network delay
+        int delay = 500 + random.nextInt(3000);
+        log.info("Simulating delay: {}ms", delay);
+        TimeUnit.MILLISECONDS.sleep(delay);
+        
+        // Simulate failures
+        if (random.nextInt(100) < failureRate) {
+            log.error("Third party payment failed for order: {}", orderId);
+            throw new RuntimeException("Third party payment service failed");
+        }
+        
+        // Simulate occasional timeout
+        if (random.nextInt(100) < 10) {
+            log.warn("Third party service timeout for order: {}", orderId);
+            throw new java.util.concurrent.TimeoutException("Third party service timeout");
+        }
+        
+        // Generate transaction ID
+        String transactionId = "TXN-" + System.currentTimeMillis() + "-" + random.nextInt(1000);
+        log.info("Third party payment successful for order:
