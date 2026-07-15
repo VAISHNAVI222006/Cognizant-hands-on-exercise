@@ -1,0 +1,1710 @@
+/**
+ * ============================================================================
+ * COMPLETE CENTRALIZED AUTHENTICATION AND SSO WITH SPRING BOOT 3
+ * ============================================================================
+ * 
+ * PROJECT: SSO Demo Application
+ * VERSION: 1.0.0
+ * JAVA: 17+
+ * SPRING BOOT: 3.1.5
+ * 
+ * ============================================================================
+ * TABLE OF CONTENTS
+ * ============================================================================
+ * 1. pom.xml - Maven Dependencies
+ * 2. application.yml - Configuration
+ * 3. SSODemoApplication.java - Main Application Class
+ * 4. SecurityConfig.java - Security Configuration
+ * 5. CustomAuthenticationHandlers.java - OAuth2 Success/Failure Handlers
+ * 6. JwtTokenProvider.java - JWT Implementation
+ * 7. JwtAuthenticationFilter.java - JWT Filter
+ * 8. CustomUserDetails.java - User Details Implementation
+ * 9. CustomUserDetailsService.java - User Details Service
+ * 10. UserController.java - User Controllers
+ * 11. AuthController.java - Authentication Controllers
+ * 12. SecureController.java - Secure Controllers
+ * 13. LoginController.java - Login Page Controller
+ * 14. ResourceServerConfig.java - Resource Server Configuration
+ * 15. login.html - Login Page Template
+ * 16. dashboard.html - Dashboard Template
+ * 
+ * ============================================================================
+ * HOW TO USE:
+ * 1. Copy all classes into their respective packages
+ * 2. Update OAuth2 credentials in application.yml
+ * 3. Build with: mvn clean install
+ * 4. Run with: mvn spring-boot:run
+ * 5. Access: http://localhost:8080
+ * ============================================================================
+ */
+
+// ============================================================================
+// 1. POM.XML - MAVEN DEPENDENCIES
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.example</groupId>
+    <artifactId>sso-demo</artifactId>
+    <version>1.0.0</version>
+    <name>SSO Demo</name>
+    <description>Centralized Authentication and SSO with Spring Boot 3</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <jjwt.version>0.11.5</jjwt.version>
+    </properties>
+    
+    <dependencies>
+        <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        
+        <!-- JWT Dependencies -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <!-- Spring Cloud Dependencies -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        
+        <!-- Lombok (Optional) -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2022.0.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// 2. APPLICATION.YML - CONFIGURATION
+// ============================================================================
+/*
+spring:
+  application:
+    name: sso-demo
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET
+            scope:
+              - openid
+              - profile
+              - email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          github:
+            client-id: YOUR_GITHUB_CLIENT_ID
+            client-secret: YOUR_GITHUB_CLIENT_SECRET
+            scope:
+              - user:email
+              - read:user
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: sub
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: id
+      
+      resourceserver:
+        jwt:
+          issuer-uri: https://issuer.example.com
+          jwk-set-uri: https://issuer.example.com/.well-known/jwks.json
+
+  # JWT Configuration for internal authentication
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration: 3600000 # 1 hour in milliseconds
+    refresh-expiration: 86400000 # 24 hours in milliseconds
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        secure: false # Set to true in production with HTTPS
+        http-only: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+# Eureka Client Configuration (for Spring Cloud)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+*/
+
+// ============================================================================
+// 3. SSODEMOAPPLICATION.JAVA - MAIN APPLICATION CLASS
+// ============================================================================
+package com.example.sso;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+/**
+ * Main Application Class for SSO Demo
+ * 
+ * @SpringBootApplication - Enables Spring Boot auto-configuration
+ * @EnableDiscoveryClient - Enables service discovery with Eureka
+ */
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SSODemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(SSODemoApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 4. SECURITYCONFIG.JAVA - SECURITY CONFIGURATION
+// ============================================================================
+package com.example.sso.config;
+
+import com.example.sso.security.JwtAuthenticationFilter;
+import com.example.sso.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+/**
+ * Main Security Configuration Class
+ * Configures OAuth2, JWT, and Resource Server security
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    
+    @Autowired
+    private UserDetailsService userDetailsService;
+    
+    @Autowired
+    private CustomAuthenticationSuccessHandler successHandler;
+    
+    @Autowired
+    private CustomAuthenticationFailureHandler failureHandler;
+    
+    @Value("${spring.jwt.secret}")
+    private String jwtSecret;
+
+    /**
+     * Main Security Filter Chain Configuration
+     * Configures authentication, authorization, and filters
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            // CORS Configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // CSRF Disabled for stateless APIs
+            .csrf(csrf -> csrf.disable())
+            
+            // Session Management - Stateless for JWT
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionFixation().none()
+            )
+            
+            // Authorization Rules
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/", 
+                    "/login", 
+                    "/oauth2/**", 
+                    "/login/oauth2/**",
+                    "/public/**",
+                    "/auth/**",
+                    "/api/auth/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/actuator/health"
+                ).permitAll()
+                .requestMatchers("/secure/**").authenticated()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            
+            // OAuth2 Login Configuration
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(successHandler)
+                .failureHandler(failureHandler)
+                .permitAll()
+            )
+            
+            // Logout Configuration
+            .logout(logout -> logout
+                .logoutSuccessUrl("/")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            )
+            
+            // OAuth2 Resource Server Configuration
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder())
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                )
+            )
+            
+            // Add JWT Authentication Filter
+            .addFilterBefore(
+                new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
+                UsernamePasswordAuthenticationFilter.class
+            );
+            
+        return http.build();
+    }
+    
+    /**
+     * CORS Configuration Source
+     * Allows cross-origin requests from specific origins
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:8080"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
+        configuration.setExposedHeaders(Arrays.asList("x-auth-token"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+    
+    /**
+     * JWT Authentication Converter
+     * Converts JWT to Authentication object
+     */
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        return new JwtAuthenticationConverter();
+    }
+    
+    /**
+     * Password Encoder Bean
+     * Uses BCrypt for password hashing
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+    /**
+     * JWT Decoder for Resource Server
+     * Validates JWT tokens using HMAC-SHA256
+     */
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    }
+}
+
+// ============================================================================
+// 5. CUSTOMAUTHENTICATIONHANDLERS.JAVA - OAUTH2 SUCCESS/FAILURE HANDLERS
+// ============================================================================
+package com.example.sso.config;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+/**
+ * Custom Authentication Success Handler
+ * Processes successful OAuth2 authentication
+ */
+@Component
+public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, 
+                                       HttpServletResponse response,
+                                       Authentication authentication) throws IOException, ServletException {
+        
+        OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+        
+        // Extract user information from OAuth2 provider
+        String name = oauth2User.getAttribute("name");
+        String email = oauth2User.getAttribute("email");
+        String picture = oauth2User.getAttribute("picture");
+        
+        // In production, you would:
+        // 1. Create or update user in database
+        // 2. Generate JWT token
+        // 3. Set user session
+        
+        // For demo, redirect to dashboard
+        response.sendRedirect("/dashboard");
+    }
+}
+
+/**
+ * Custom Authentication Failure Handler
+ * Processes failed OAuth2 authentication
+ */
+@Component
+public class CustomAuthenticationFailureHandler implements AuthenticationFailureHandler {
+    
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, 
+                                       HttpServletResponse response,
+                                       AuthenticationException exception) throws IOException, ServletException {
+        
+        // Log the error and redirect to login page with error parameter
+        response.sendRedirect("/login?error=true");
+    }
+}
+
+// ============================================================================
+// 6. JWTTOKENPROVIDER.JAVA - JWT IMPLEMENTATION
+// ============================================================================
+package com.example.sso.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.stream.Collectors;
+
+/**
+ * JWT Token Provider
+ * Handles JWT token generation, validation, and extraction
+ */
+@Component
+public class JwtTokenProvider {
+
+    private static final String AUTHORITIES_KEY = "auth";
+    
+    @Value("${spring.jwt.secret}")
+    private String jwtSecret;
+    
+    @Value("${spring.jwt.expiration}")
+    private int jwtExpirationInMs;
+    
+    @Value("${spring.jwt.refresh-expiration}")
+    private int refreshExpirationInMs;
+
+    /**
+     * Generate JWT token from Authentication object
+     */
+    public String generateToken(Authentication authentication) {
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        
+        String authorities = authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.joining(","));
+        
+        return Jwts.builder()
+            .setSubject(userPrincipal.getUsername())
+            .claim(AUTHORITIES_KEY, authorities)
+            .setIssuedAt(now)
+            .setExpiration(expiryDate)
+            .signWith(getSignKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+    
+    /**
+     * Generate Refresh Token
+     * Longer validity than access token
+     */
+    public String generateRefreshToken(Authentication authentication) {
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpirationInMs);
+        
+        return Jwts.builder()
+            .setSubject(userPrincipal.getUsername())
+            .setIssuedAt(now)
+            .setExpiration(expiryDate)
+            .signWith(getSignKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    /**
+     * Extract username from JWT token
+     */
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+            .setSigningKey(getSignKey())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+            
+        return claims.getSubject();
+    }
+    
+    /**
+     * Extract authorities from JWT token
+     */
+    public Collection<? extends GrantedAuthority> getAuthoritiesFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+            .setSigningKey(getSignKey())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+            
+        String authorities = claims.get(AUTHORITIES_KEY, String.class);
+        if (authorities != null && !authorities.isEmpty()) {
+            return Arrays.stream(authorities.split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+        }
+        return Arrays.asList();
+    }
+
+    /**
+     * Validate JWT token
+     * Checks signature and expiration
+     */
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Get signing key for JWT
+     */
+    private Key getSignKey() {
+        byte[] keyBytes = jwtSecret.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
+
+// ============================================================================
+// 7. JWTAUTHENTICATIONFILTER.JAVA - JWT FILTER
+// ============================================================================
+package com.example.sso.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+/**
+ * JWT Authentication Filter
+ * Validates JWT tokens for each request
+ */
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final JwtTokenProvider tokenProvider;
+    private final UserDetailsService userDetailsService;
+
+    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider, UserDetailsService userDetailsService) {
+        this.tokenProvider = tokenProvider;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                   HttpServletResponse response, 
+                                   FilterChain filterChain) throws ServletException, IOException {
+        
+        String jwt = getJwtFromRequest(request);
+        
+        if (jwt != null && tokenProvider.validateToken(jwt)) {
+            String username = tokenProvider.getUsernameFromToken(jwt);
+            
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            
+            UsernamePasswordAuthenticationToken authentication = 
+                new UsernamePasswordAuthenticationToken(
+                    userDetails, 
+                    null, 
+                    tokenProvider.getAuthoritiesFromToken(jwt)
+                );
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        
+        filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extract JWT token from Authorization header
+     */
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+}
+
+// ============================================================================
+// 8. CUSTOMUSERDETAILS.JAVA - USER DETAILS IMPLEMENTATION
+// ============================================================================
+package com.example.sso.security;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Custom User Details Implementation
+ * Extends Spring Security's UserDetails for OAuth2 support
+ */
+public class CustomUserDetails implements UserDetails, OAuth2User {
+
+    private String id;
+    private String username;
+    private String email;
+    private String password;
+    private Collection<? extends GrantedAuthority> authorities;
+    private Map<String, Object> attributes;
+    private boolean enabled = true;
+
+    public CustomUserDetails(String username, String password, Collection<? extends GrantedAuthority> authorities) {
+        this.username = username;
+        this.password = password;
+        this.authorities = authorities;
+    }
+
+    public CustomUserDetails(String id, String username, String email, String password, 
+                           Collection<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.authorities = authorities;
+    }
+
+    /**
+     * Create CustomUserDetails from OAuth2User
+     */
+    public static CustomUserDetails create(OAuth2User oAuth2User) {
+        Collection<? extends GrantedAuthority> authorities = oAuth2User.getAuthorities().stream()
+            .map(auth -> new SimpleGrantedAuthority("ROLE_" + auth.getAuthority()))
+            .collect(Collectors.toList());
+        
+        CustomUserDetails user = new CustomUserDetails(
+            oAuth2User.getAttribute("sub"),
+            oAuth2User.getAttribute("name"),
+            oAuth2User.getAttribute("email"),
+            "",
+            authorities
+        );
+        user.setAttributes(oAuth2User.getAttributes());
+        return user;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public String getName() {
+        return username;
+    }
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
+    
+    // Getters and Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+}
+
+// ============================================================================
+// 9. CUSTOMUSERDETAILSSERVICE.JAVA - USER DETAILS SERVICE
+// ============================================================================
+package com.example.sso.service;
+
+import com.example.sso.security.CustomUserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+
+/**
+ * Custom User Details Service
+ * Loads user details for authentication
+ */
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // In a real application, you would load from database
+        // This is a demo implementation with predefined users
+        
+        if ("user".equals(username)) {
+            return new CustomUserDetails(
+                username,
+                "password", // In production, use encoded password
+                Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+        } else if ("admin".equals(username)) {
+            return new CustomUserDetails(
+                username,
+                "password",
+                Arrays.asList(
+                    new SimpleGrantedAuthority("ROLE_USER"), 
+                    new SimpleGrantedAuthority("ROLE_ADMIN")
+                )
+            );
+        }
+        throw new UsernameNotFoundException("User not found with username: " + username);
+    }
+}
+
+// ============================================================================
+// 10. USERCONTROLLER.JAVA - USER CONTROLLERS
+// ============================================================================
+package com.example.sso.controller;
+
+import com.example.sso.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * User Controller
+ * Handles user-related endpoints
+ */
+@RestController
+public class UserController {
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    /**
+     * Get authenticated user information from OAuth2
+     */
+    @GetMapping("/user")
+    public ResponseEntity<?> getUser(@AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+        
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", principal.getAttribute("sub"));
+        userInfo.put("name", principal.getAttribute("name"));
+        userInfo.put("email", principal.getAttribute("email"));
+        userInfo.put("picture", principal.getAttribute("picture"));
+        
+        return ResponseEntity.ok(userInfo);
+    }
+
+    /**
+     * Get principal information
+     */
+    @GetMapping("/user/principal")
+    public Principal getPrincipal(Principal principal) {
+        return principal;
+    }
+    
+    /**
+     * Get current authenticated user
+     */
+    @GetMapping("/user/current")
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", authentication.getName());
+        response.put("authorities", authentication.getAuthorities());
+        response.put("authenticated", authentication.isAuthenticated());
+        
+        return ResponseEntity.ok(response);
+    }
+}
+
+// ============================================================================
+// 11. AUTHCONTROLLER.JAVA - AUTHENTICATION CONTROLLERS
+// ============================================================================
+package com.example.sso.controller;
+
+import com.example.sso.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Authentication Controller
+ * Handles login and token management
+ */
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    /**
+     * Authenticate user and return JWT tokens
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        // In a real application, you would validate credentials using AuthenticationManager
+        // This is a simplified demo implementation
+        
+        // Create authentication object
+        Authentication authentication = authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+        
+        // Generate tokens
+        String jwt = tokenProvider.generateToken(authentication);
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("accessToken", jwt);
+        response.put("refreshToken", refreshToken);
+        response.put("tokenType", "Bearer");
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Refresh access token using refresh token
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
+        // Validate refresh token and generate new access token
+        if (tokenProvider.validateToken(request.getRefreshToken())) {
+            String username = tokenProvider.getUsernameFromToken(request.getRefreshToken());
+            Authentication authentication = authenticate(username);
+            String newAccessToken = tokenProvider.generateToken(authentication);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("accessToken", newAccessToken);
+            response.put("refreshToken", request.getRefreshToken());
+            response.put("tokenType", "Bearer");
+            
+            return ResponseEntity.ok(response);
+        }
+        
+        return ResponseEntity.status(401).body("Invalid refresh token");
+    }
+
+    /**
+     * Simple authentication method (demo only)
+     */
+    private Authentication authenticate(String username, String password) {
+        // In production, validate against database
+        return new UsernamePasswordAuthenticationToken(username, password);
+    }
+    
+    private Authentication authenticate(String username) {
+        return new UsernamePasswordAuthenticationToken(username, null, null);
+    }
+}
+
+/**
+ * Login Request DTO
+ */
+class LoginRequest {
+    private String username;
+    private String password;
+    
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+/**
+ * Refresh Token Request DTO
+ */
+class RefreshTokenRequest {
+    private String refreshToken;
+    
+    public String getRefreshToken() { return refreshToken; }
+    public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
+}
+
+// ============================================================================
+// 12. SECURECONTROLLER.JAVA - SECURE CONTROLLERS
+// ============================================================================
+package com.example.sso.controller;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Secure Controller
+ * Contains protected endpoints with role-based access
+ */
+@RestController
+@RequestMapping("/secure")
+public class SecureController {
+
+    /**
+     * Basic secure endpoint
+     */
+    @GetMapping
+    public String secure() {
+        return "This is a secure endpoint!";
+    }
+    
+    /**
+     * Protected data endpoint
+     */
+    @GetMapping("/data")
+    public Map<String, String> getSecureData() {
+        Map<String, String> data = new HashMap<>();
+        data.put("message", "This is protected data");
+        data.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        data.put("status", "ACCESS_GRANTED");
+        return data;
+    }
+
+    /**
+     * Admin-only endpoint
+     * Requires ROLE_ADMIN
+     */
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminOnly() {
+        return "This is an admin-only endpoint - Authorized!";
+    }
+
+    /**
+     * Get user information from authentication
+     */
+    @GetMapping("/user-info")
+    public Map<String, Object> getUserInfo(Authentication authentication) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("username", authentication.getName());
+        info.put("authorities", authentication.getAuthorities());
+        info.put("authenticated", authentication.isAuthenticated());
+        return info;
+    }
+}
+
+/**
+ * API Controller
+ * Public and private API endpoints
+ */
+@RestController
+@RequestMapping("/api")
+class ApiController {
+
+    /**
+     * Public endpoint - no authentication required
+     */
+    @GetMapping("/public/hello")
+    public String publicHello() {
+        return "Hello from public endpoint!";
+    }
+
+    /**
+     * Private endpoint - authentication required
+     */
+    @GetMapping("/private/hello")
+    public String privateHello() {
+        return "Hello from private endpoint!";
+    }
+
+    /**
+     * User info from JWT
+     */
+    @GetMapping("/private/user")
+    public Map<String, Object> getUser(@AuthenticationPrincipal Jwt jwt) {
+        Map<String, Object> user = new HashMap<>();
+        user.put("subject", jwt.getSubject());
+        user.put("claims", jwt.getClaims());
+        return user;
+    }
+}
+
+// ============================================================================
+// 13. LOGINCONTROLLER.JAVA - LOGIN PAGE CONTROLLER
+// ============================================================================
+package com.example.sso.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+/**
+ * Login Controller
+ * Handles view rendering for login and dashboard
+ */
+@Controller
+public class LoginController {
+
+    /**
+     * Login page
+     */
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    /**
+     * Dashboard page (after successful authentication)
+     */
+    @GetMapping("/dashboard")
+    public String dashboard() {
+        return "dashboard";
+    }
+
+    /**
+     * Home page redirects to dashboard
+     */
+    @GetMapping("/")
+    public String home() {
+        return "redirect:/dashboard";
+    }
+}
+
+// ============================================================================
+// 14. RESOURCESERVERCONFIG.JAVA - RESOURCE SERVER CONFIGURATION
+// ============================================================================
+package com.example.sso.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Resource Server Configuration
+ * Protects API endpoints with JWT validation
+ */
+@Configuration
+@EnableWebSecurity
+public class ResourceServerConfig {
+
+    @Value("${spring.jwt.secret}")
+    private String jwtSecret;
+
+    /**
+     * Resource Server Security Filter Chain
+     * Secures API endpoints with JWT
+     */
+    @Bean
+    public SecurityFilterChain resourceServerFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/**")
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder())
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                )
+            );
+            
+        return http.build();
+    }
+    
+    /**
+     * JWT Decoder for validating tokens
+     */
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    }
+    
+    /**
+     * JWT Authentication Converter
+     */
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        return new JwtAuthenticationConverter();
+    }
+}
+
+// ============================================================================
+// 15. LOGIN.HTML - LOGIN PAGE TEMPLATE
+// ============================================================================
+/*
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SSO Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            width: 420px;
+            text-align: center;
+        }
+        h1 { 
+            color: #333; 
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .btn-oauth {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+        }
+        .btn-oauth:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-oauth:active { transform: translateY(0); }
+        .btn-google { background: #DB4437; }
+        .btn-github { background: #24292e; }
+        .btn-oauth i { margin-right: 10px; }
+        .error { 
+            color: #e74c3c; 
+            margin-top: 15px;
+            padding: 10px;
+            background: #fde8e8;
+            border-radius: 5px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        .divider span {
+            padding: 0 10px;
+            color: #888;
+            font-size: 12px;
+        }
+        .footer {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔐 SSO Demo</h1>
+        <p class="subtitle">Centralized Authentication with OAuth2</p>
+        
+        <div class="divider"><span>Sign in with</span></div>
+        
+        <a href="/oauth2/authorization/google" class="btn-oauth btn-google">
+            <span style="font-size:20px;">G</span> Sign in with Google
+        </a>
+        <a href="/oauth2/authorization/github" class="btn-oauth btn-github">
+            <span style="font-size:20px;">🐙</span> Sign in with GitHub
+        </a>
+        
+        <div th:if="${param.error}" class="error">
+            ⚠️ Authentication failed. Please try again.
+        </div>
+        
+        <div class="footer">
+            Secure SSO Demo | Spring Boot 3
+        </div>
+    </div>
+</body>
+</html>
+*/
+
+// ============================================================================
+// 16. DASHBOARD.HTML - DASHBOARD TEMPLATE
+// ============================================================================
+/*
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SSO Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+        }
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 { color: #667eea; font-size: 24px; }
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+        }
+        .btn-logout {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-logout:hover { background: #c0392b; }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .welcome {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        .welcome h2 { color: #333; margin-bottom: 10px; }
+        .welcome p { color: #666; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h4 { 
+            color: #333; 
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .card p { color: #666; margin: 8px 0; }
+        .card ul {
+            list-style: none;
+            padding: 0;
+        }
+        .card ul li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .card ul li:last-child { border-bottom: none; }
+        .card ul li a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .card ul li a:hover { text-decoration: underline; }
+        .btn-test {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .btn-test:hover { background: #5a67d8; }
+        .api-result {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-size: 13px;
+            max-height: 150px;
+            overflow: auto;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        .badge-user { background: #e8f5e9; color: #2e7d32; }
+        .badge-admin { background: #fff3e0; color: #e65100; }
+        .badge-oauth { background: #e3f2fd; color: #0d47a1; }
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 15px; }
+            .navbar-right { flex-wrap: wrap; justify-content: center; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>🏠 SSO Dashboard</h1>
+        <div class="navbar-right">
+            <div class="user-info">
+                <span th:text="${#authentication.getName()}"></span>
+                <span class="badge badge-oauth">OAuth2</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn-logout">🚪 Logout</button>
+            </form>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="welcome">
+            <h2>👋 Welcome, <span th:text="${#authentication.getName()}"></span>!</h2>
+            <p>You are successfully authenticated via OAuth2. This is your secure dashboard.</p>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h4>👤 User Information</h4>
+                <p><strong>Username:</strong> <span th:text="${#authentication.getName()}"></span></p>
+                <p><strong>Roles:</strong> 
+                    <span th:each="role : ${#authentication.getAuthorities()}">
+                        <span class="badge" th:classappend="${role.getAuthority() == 'ROLE_ADMIN'} ? 'badge-admin' : 'badge-user'"
+                              th:text="${role.getAuthority()}"></span>
+                    </span>
+                </p>
+                <p><strong>Authenticated:</strong> <span th:text="${#authentication.isAuthenticated()}"></span></p>
+            </div>
+            
+            <div class="card">
+                <h4>🔗 Quick Links</h4>
+                <ul>
+                    <li><a href="/user">📋 View User Details</a></li>
+                    <li><a href="/secure/data">🔒 Access Secure Data</a></li>
+                    <li><a href="/secure/admin" th:if="${#authentication.getAuthorities().contains('ROLE_ADMIN')}">👑 Admin Panel</a></li>
+                    <li><a href="/api/public/hello">🌐 Public API Test</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h4>📝 API Test</h4>
+                <button onclick="testSecureApi()" class="btn-test">Test Secure API</button>
+                <button onclick="testAdminApi()" class="btn-test" style="background:#e67e22;margin-left:5px;">Test Admin API</button>
+                <div id="apiResult" class="api-result">Click a button to test API endpoints...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function testSecureApi() {
+            document.getElementById('apiResult').textContent = '⏳ Loading...';
+            fetch('/secure/data')
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('apiResult').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('apiResult').textContent = '❌ Error: ' + error.message;
+                });
+        }
+        
+        function testAdminApi() {
+            document.getElementById('apiResult').textContent = '⏳ Loading...';
+            fetch('/secure/admin')
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.text();
+                })
+                .then(data => {
+                    document.getElementById('apiResult').textContent = '✅ Success: ' + data;
+                })
+                .catch(error => {
+                    document.getElementById('apiResult').textContent = '❌ Error (Admin access required): ' + error.message;
+                });
+        }
+    </script>
+</body>
+</html>
+*/
+
+// ============================================================================
+// END OF COMPLETE SOLUTION
+// ============================================================================
+/**
+ * 
+ * ============================================================================
+ * COMPLETE API REFERENCE
+ * ============================================================================
+ * 
+ * PUBLIC ENDPOINTS:
+ *   GET  /                                 - Redirects to dashboard
+ *   GET  /login                            - Login page
+ *   GET  /oauth2/authorization/{provider}  - Initiate OAuth2 login
+ *   GET  /api/public/hello                 - Public API endpoint
+ *   POST /api/auth/login                   - JWT login endpoint
+ *   POST /api/auth/refresh                 - Refresh JWT token
+ * 
+ * SECURE ENDPOINTS:
+ *   GET  /user                             - Get OAuth2 user info
+ *   GET  /user/current                     - Get current authenticated user
+ *   GET  /secure                           - Basic secure endpoint
+ *   GET  /secure/data                      - Protected data endpoint
+ *   GET  /secure/admin                     - Admin-only endpoint
+ *   GET  /secure/user-info                 - User authentication info
+ *   GET  /api/private/hello                - Private API endpoint
+ *   GET  /api/private/user                 - Get user from JWT
+ * 
+ * ============================================================================
+ * TESTING WITH CURL
+ * ============================================================================
+ * 
+ * # Get public endpoint
+ * curl http://localhost:8080/api/public/hello
+ * 
+ * # Login and get JWT
+ * curl -X POST http://localhost:8080/api/auth/login \
+ *   -H "Content-Type: application/json" \
+ *   -d '{"username":"user","password":"password"}'
+ * 
+ * # Access secure endpoint with JWT
+ * curl http://localhost:8080/secure/data \
+ *   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+ * 
+ * # Refresh token
+ * curl -X POST http://localhost:8080/api/auth/refresh \
+ *   -H "Content-Type: application/json" \
+ *   -d '{"refreshToken":"YOUR_REFRESH_TOKEN"}'
+ * 
+ * ============================================================================
+ * OAuth2 PROVIDERS CONFIGURATION
+ * ============================================================================
+ * 
+ * GOOGLE:
+ * 1. Go to https://console.cloud.google.com
+ * 2. Create new project
+ * 3. Enable Google+ API
+ * 4. Create OAuth2 credentials
+ * 5. Set redirect URI: http://localhost:8080/login/oauth2/code/google
+ * 6. Copy Client ID and Secret
+ * 
+ * GITHUB:
+ * 1. Go to https://github.com/settings/developers
+ * 2. Click "New OAuth App"
+ * 3. Set Homepage URL: http://localhost:8080
+ * 4. Set Authorization callback URL: http://localhost:8080/login/oauth2/code/github
+ * 5. Copy Client ID and Secret
+ * 
+ * ============================================================================
+ * TROUBLESHOOTING
+ * ============================================================================
+ * 
+ * 1. "Invalid redirect_uri" - Ensure redirect URI matches OAuth2 provider settings
+ * 2. "JWT validation failed" - Check secret key matches between generation and validation
+ * 3. "403 Forbidden" - User doesn't have required roles
+ * 4. "401 Unauthorized" - Missing or invalid JWT token
+ * 5. "Connection refused" - Ensure OAuth2 provider is accessible
+ * 
+ * ============================================================================
+ */
