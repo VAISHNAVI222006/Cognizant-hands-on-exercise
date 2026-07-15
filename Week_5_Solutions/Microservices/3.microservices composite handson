@@ -1,0 +1,1475 @@
+/**
+ * ============================================================================
+ * ENTERPRISE APPLICATION THEORY AND MICROSERVICES IMPLEMENTATION
+ * ============================================================================
+ * 
+ * A comprehensive guide to understanding Enterprise Applications, 
+ * Monolithic vs Microservices Architecture, and hands-on implementation
+ * of microservices with Spring Boot, Eureka, and API Gateway.
+ * 
+ * ============================================================================
+ * TABLE OF CONTENTS
+ * ============================================================================
+ * 1. Enterprise Application Theory
+ * 2. Banking Services Overview
+ * 3. Monolithic Services - Drawbacks and Challenges
+ * 4. Microservices Architecture - Advantages and Challenges
+ * 5. Hands-on: Account Microservice
+ * 6. Hands-on: Loan Microservice
+ * 7. Hands-on: Eureka Discovery Server
+ * 8. Hands-on: API Gateway with Global Filter
+ * 9. Hands-on: Greet Service
+ * 10. Complete Working Code
+ * 11. Testing and Verification
+ * 12. Airtel Services Activity
+ * ============================================================================
+ */
+
+// ============================================================================
+// PART 1: ENTERPRISE APPLICATION THEORY
+// ============================================================================
+
+/**
+ * ============================================================================
+ * WHAT IS AN ENTERPRISE APPLICATION?
+ * ============================================================================
+ * 
+ * An Enterprise Application is a large-scale software system designed to 
+ * support complex business processes and operations of an organization.
+ * 
+ * Key Characteristics:
+ * 1. Handles critical business functions
+ * 2. Supports multiple users simultaneously
+ * 3. Integrates with other systems
+ * 4. Manages large volumes of data
+ * 5. Provides high availability and reliability
+ * 6. Supports business growth and scalability
+ * 
+ * Examples: Banking Systems, Telecom Systems, ERP Systems, CRM Systems
+ * 
+ * ============================================================================
+ * BANKING SERVICES OVERVIEW
+ * ============================================================================
+ * 
+ * Core Banking Services:
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                        BANKING SERVICES                         │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+ * │  │   SAVINGS        │  │   CURRENT       │  │   FIXED         │ │
+ * │  │   ACCOUNT        │  │   ACCOUNT       │  │   DEPOSITS      │ │
+ * │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+ * │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+ * │  │   LOANS          │  │   INSURANCE     │  │   INVESTMENTS   │ │
+ * │  │   - Home         │  │   - Life        │  │   - Mutual      │ │
+ * │  │   - Car          │  │   - Health      │  │     Funds       │ │
+ * │  │   - Personal     │  │   - Property    │  │   - Stocks      │ │
+ * │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+ * │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+ * │  │   DIGITAL        │  │   PAYMENT       │  │   CUSTOMER      │ │
+ * │  │   BANKING        │  │   SERVICES      │  │   SERVICES      │ │
+ * │  │   - Mobile       │  │   - NEFT/RTGS   │  │   - CRM         │ │
+ * │  │   - Net Banking  │  │   - UPI         │  │   - Complaints  │ │
+ * │  │   - SMS Banking  │  │   - Bill Pay    │  │   - Support     │ │
+ * │  │   - Phone Banking│  │   - Cards       │  │                 │ │
+ * │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+ * └─────────────────────────────────────────────────────────────────┘
+ * 
+ * ============================================================================
+ * SAVINGS ACCOUNT - DETAILED BREAKDOWN
+ * ============================================================================
+ * 
+ * A Savings Account is a fundamental banking product with various aspects:
+ * 
+ * 1. Account Management:
+ *    - Account Opening
+ *    - Account Closure
+ *    - Account Updates (personal info, address, etc.)
+ *    - Account Status (active, dormant, frozen)
+ *    - KYC Compliance
+ *    - Nomination Management
+ * 
+ * 2. Transactions:
+ *    - Deposits (cash, cheque, transfer)
+ *    - Withdrawals (cash, cheque, ATM)
+ *    - Fund Transfers (NEFT, RTGS, IMPS, UPI)
+ *    - Balance Inquiry
+ *    - Mini Statement
+ *    - Full Statement
+ * 
+ * 3. Interest Management:
+ *    - Interest Calculation (daily/monthly/quarterly)
+ *    - Interest Rate Changes
+ *    - Interest Credit
+ *    - Tax Deduction (TDS on interest)
+ * 
+ * 4. Charges and Fees:
+ *    - Monthly Average Balance (MAB) penalty
+ *    - Transaction charges
+ *    - Cheque return charges
+ *    - SMS alert charges
+ *    - Debit card annual fees
+ * 
+ * 5. Security Features:
+ *    - Debit/Credit Card Management
+ *    - PIN Generation/Reset
+ *    - Transaction Limits
+ *    - Two-Factor Authentication
+ *    - Fraud Detection
+ *    - Block/Unblock Account
+ * 
+ * 6. Regulatory Compliance:
+ *    - RBI Guidelines
+ *    - KYC Norms
+ *    - FATCA Reporting
+ *    - PAN/Aadhaar linking
+ * 
+ * 7. Customer Services:
+ *    - Account Balance SMS/Email
+ *    - Transaction Alerts
+ *    - E-statements
+ *    - ATM Services
+ *    - Cheque Book Request
+ *    - Stop Payment Request
+ * 
+ * ============================================================================
+ * PART 2: MONOLITHIC SERVICES
+ * ============================================================================
+ */
+
+/**
+ * ============================================================================
+ * WHAT IS A MONOLITHIC SERVICE?
+ * ============================================================================
+ * 
+ * A Monolithic Service is a traditional approach where all components of an
+ * application are built as a single, tightly coupled unit.
+ * 
+ * Characteristics:
+ * 1. Single codebase
+ * 2. Single deployment unit (EAR/WAR file)
+ * 3. Shared database
+ * 4. Single technology stack
+ * 5. All components run in the same process
+ * 
+ * Real-World Example - Bank Monolith:
+ * ```
+ * BankApp.war (Deployed on Application Server)
+ * │
+ * ├── Account Service
+ * │   ├── Create Account
+ * │   ├── Update Account
+ * │   ├── Get Balance
+ * │   └── Close Account
+ * │
+ * ├── Loan Service
+ * │   ├── Apply Loan
+ * │   ├── Approve Loan
+ * │   ├── Get Loan Details
+ * │   └── Close Loan
+ * │
+ * ├── Insurance Service
+ * │   ├── Buy Insurance
+ * │   ├── Claim Insurance
+ * │   └── Renew Insurance
+ * │
+ * ├── Payment Service
+ * │   ├── Process Payment
+ * │   ├── Refund Payment
+ * │   └── Get Payment Status
+ * │
+ * ├── Shared Database (Single Database)
+ * └── Shared Resources (Memory, Threads)
+ * ```
+ * 
+ * ============================================================================
+ * REAL-WORLD SCENARIO: MONOLITH FAILURE
+ * ============================================================================
+ * 
+ * Problem Statement:
+ * A bank launched a monolithic application with all services packaged together.
+ * During festival season, there was a surge in "Get Balance" requests.
+ * A memory leak in the balance service caused the entire application to fail.
+ * 
+ * Impact:
+ * 1. Loan agents couldn't submit loan applications
+ * 2. Insurance agents couldn't process closures
+ * 3. Customers couldn't report stolen cards
+ * 4. Customer service queue backed up 25+ minutes
+ * 5. Server restart required, causing 2-3 hours downtime
+ * 
+ * Root Cause:
+ * - Single point of failure
+ * - Memory leak in one service affecting all services
+ * - No isolation between services
+ * - All services share the same JVM
+ * 
+ * ============================================================================
+ * DRAWBACKS OF MONOLITHIC SERVICES
+ * ============================================================================
+ * 
+ * 1. SINGLE POINT OF FAILURE
+ *    - If one service fails, everything fails
+ *    - Memory leak in one service affects all
+ *    - No fault isolation
+ * 
+ * 2. SCALING CHALLENGES
+ *    - Must scale the entire application
+ *    - Can't scale individual services
+ *    - Resource wastage
+ * 
+ * 3. TECHNOLOGY LOCK-IN
+ *    - Must use same technology stack for everything
+ *    - Can't try new technologies
+ *    - Difficult to upgrade
+ * 
+ * 4. DEVELOPMENT BOTTLENECKS
+ *    - Large teams work on same codebase
+ *    - Merge conflicts
+ *    - Slow build times
+ * 
+ * 5. DEPLOYMENT RISKS
+ *    - Any change requires full deployment
+ *    - Risk of breaking everything
+ *    - Long deployment cycles
+ * 
+ * 6. PERFORMANCE ISSUES
+ *    - Memory leaks affect all services
+ *    - One service can hog resources
+ *    - Cascading failures
+ * 
+ * ============================================================================
+ * PART 3: MICROSERVICES ARCHITECTURE
+ * ============================================================================
+ */
+
+/**
+ * ============================================================================
+ * WHAT ARE MICROSERVICES?
+ * ============================================================================
+ * 
+ * Microservices is an architectural style that structures an application as
+ * a collection of loosely coupled, independently deployable services.
+ * 
+ * Key Characteristics:
+ * 1. Each service runs independently
+ * 2. Each service has its own database
+ * 3. Services communicate via APIs
+ * 4. Polyglot architecture (different tech stacks)
+ * 5. Independently deployable
+ * 6. Organized around business capabilities
+ * 
+ * Microservices Architecture Diagram:
+ * ```
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                        API GATEWAY                             │
+ * │                   (Single Entry Point)                         │
+ * └────────┬──────────────┬──────────────┬───────────────────────┘
+ *          │              │              │
+ *          ▼              ▼              ▼
+ * ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+ * │   Account    │ │    Loan      │ │  Insurance   │
+ * │   Service    │ │   Service    │ │   Service    │
+ * │   Port:8081  │ │  Port:8082   │ │  Port:8083   │
+ * │  ┌────────┐  │ │  ┌────────┐  │ │  ┌────────┐  │
+ * │  │Account │  │ │  │  Loan  │  │ │  │Insurance│  │
+ * │  │  DB    │  │ │  │   DB   │  │ │  │   DB   │  │
+ * │  └────────┘  │ │  └────────┘  │ │  └────────┘  │
+ * └──────────────┘ └──────────────┘ └──────────────┘
+ *          │              │              │
+ *          ▼              ▼              ▼
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    EUREKA DISCOVERY SERVER                      │
+ * │                   (Service Registry)                           │
+ * └─────────────────────────────────────────────────────────────────┘
+ * ```
+ * 
+ * ============================================================================
+ * ADVANTAGES OF MICROSERVICES
+ * ============================================================================
+ * 
+ * 1. INDEPENDENT DEPLOYMENT
+ *    - Deploy each service independently
+ *    - No risk of breaking other services
+ *    - Faster deployment cycles
+ * 
+ * 2. SCALABILITY
+ *    - Scale only the services that need it
+ *    - Better resource utilization
+ *    - Horizontal scaling
+ * 
+ * 3. FAULT ISOLATION
+ *    - Issues are isolated to specific services
+ *    - Failures don't cascade
+ *    - Better resilience
+ * 
+ * 4. TECHNOLOGY DIVERSITY
+ *    - Use best technology for each service
+ *    - Try new technologies easily
+ *    - Gradual upgrades
+ * 
+ * 5. TEAM AUTONOMY
+ *    - Teams can own specific services
+ *    - Faster development
+ *    - Better accountability
+ * 
+ * 6. EASIER DEBUGGING
+ *    - Issues are isolated to specific services
+ *    - Easier to identify the faulty service
+ *    - Faster problem resolution
+ * 
+ * 7. CONTINUOUS DELIVERY
+ *    - Easier to implement CI/CD
+ *    - Faster release cycles
+ *    - Reduced risk
+ * 
+ * ============================================================================
+ * CHALLENGES OF MICROSERVICES
+ * ============================================================================
+ * 
+ * 1. DISTRIBUTED SYSTEM COMPLEXITY
+ *    - Network latency
+ *    - Service discovery
+ *    - Distributed transactions
+ * 
+ * 2. DATA MANAGEMENT
+ *    - Data consistency
+ *    - Distributed transactions
+ *    - Data synchronization
+ * 
+ * 3. OPERATIONAL COMPLEXITY
+ *    - Monitoring multiple services
+ *    - Logging and tracing
+ *    - Health checks
+ * 
+ * 4. DEVELOPMENT COMPLEXITY
+ *    - Service communication
+ *    - Testing integration
+ *    - Version management
+ * 
+ * 5. SECURITY
+ *    - Securing service-to-service communication
+ *    - Authentication/Authorization
+ *    - API Gateway security
+ * 
+ * 6. INITIAL IMPLEMENTATION
+ *    - More complex initial setup
+ *    - Need for DevOps culture
+ *    - Requires skilled team
+ * 
+ * ============================================================================
+ * PART 4: HANDS-ON IMPLEMENTATION
+ * ============================================================================
+ */
+
+// ============================================================================
+// 4.1 ACCOUNT MICROSERVICE - Complete Implementation
+// ============================================================================
+
+/**
+ * ============================================================================
+ * ACCOUNT MICROSERVICE
+ * ============================================================================
+ * 
+ * Project Structure:
+ * account/
+ * ├── src/
+ * │   └── main/
+ * │       ├── java/
+ * │       │   └── com/
+ * │       │       └── cognizant/
+ * │       │           └── account/
+ * │       │               ├── AccountApplication.java
+ * │       │               ├── controller/
+ * │       │               │   └── AccountController.java
+ * │       │               ├── model/
+ * │       │               │   └── Account.java
+ * │       │               └── service/
+ * │       │                   └── AccountService.java
+ * │       └── resources/
+ * │           └── application.properties
+ * └── pom.xml
+ * 
+ * Port: 8081
+ * Application Name: account-service
+ * ============================================================================
+ */
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - pom.xml
+// ============================================================================
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.cognizant</groupId>
+    <artifactId>account</artifactId>
+    <version>1.0.0</version>
+    <name>account</name>
+    <description>Account Microservice</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+*/
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - application.properties
+// ============================================================================
+/*
+# Application Configuration
+spring.application.name=account-service
+server.port=8081
+
+# Eureka Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+# Logging
+logging.level.com.cognizant=DEBUG
+logging.level.org.springframework.web=DEBUG
+*/
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - AccountApplication.java
+// ============================================================================
+package com.cognizant.account;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@EnableDiscoveryClient  // Registers this service with Eureka
+public class AccountApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(AccountApplication.class, args);
+    }
+}
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - Account.java (Model)
+// ============================================================================
+package com.cognizant.account.model;
+
+/**
+ * Account Model Class
+ * Represents a bank account with basic information
+ */
+public class Account {
+    private String number;
+    private String type;
+    private double balance;
+    private String customerName;
+    private String branchCode;
+    private String status;
+
+    // Constructors
+    public Account() {
+    }
+
+    public Account(String number, String type, double balance, 
+                   String customerName, String branchCode, String status) {
+        this.number = number;
+        this.type = type;
+        this.balance = balance;
+        this.customerName = customerName;
+        this.branchCode = branchCode;
+        this.status = status;
+    }
+
+    // Getters and Setters
+    public String getNumber() { return number; }
+    public void setNumber(String number) { this.number = number; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getBranchCode() { return branchCode; }
+    public void setBranchCode(String branchCode) { this.branchCode = branchCode; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - AccountController.java
+// ============================================================================
+package com.cognizant.account.controller;
+
+import com.cognizant.account.model.Account;
+import com.cognizant.account.service.AccountService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/accounts")
+public class AccountController {
+
+    @Autowired
+    private AccountService accountService;
+
+    /**
+     * Get account details by account number
+     * URL: GET /accounts/{number}
+     * Response: Account details in JSON format
+     */
+    @GetMapping("/{number}")
+    public Account getAccountByNumber(@PathVariable String number) {
+        System.out.println("=== ACCOUNT SERVICE CALLED ===");
+        System.out.println("Account Number: " + number);
+        return accountService.getAccountByNumber(number);
+    }
+
+    /**
+     * Create a new account
+     * URL: POST /accounts
+     */
+    @PostMapping
+    public Account createAccount(@RequestBody Account account) {
+        System.out.println("=== CREATING NEW ACCOUNT ===");
+        return accountService.createAccount(account);
+    }
+
+    /**
+     * Update account details
+     * URL: PUT /accounts/{number}
+     */
+    @PutMapping("/{number}")
+    public Account updateAccount(@PathVariable String number, @RequestBody Account account) {
+        System.out.println("=== UPDATING ACCOUNT ===");
+        System.out.println("Account Number: " + number);
+        return accountService.updateAccount(number, account);
+    }
+
+    /**
+     * Delete account
+     * URL: DELETE /accounts/{number}
+     */
+    @DeleteMapping("/{number}")
+    public String deleteAccount(@PathVariable String number) {
+        System.out.println("=== DELETING ACCOUNT ===");
+        System.out.println("Account Number: " + number);
+        return "Account " + number + " deleted successfully";
+    }
+}
+
+// ============================================================================
+// ACCOUNT MICROSERVICE - AccountService.java
+// ============================================================================
+package com.cognizant.account.service;
+
+import com.cognizant.account.model.Account;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class AccountService {
+
+    // Simulated database
+    private Map<String, Account> accountDatabase = new HashMap<>();
+
+    public AccountService() {
+        // Initialize with dummy data
+        accountDatabase.put("00987987973432", 
+            new Account("00987987973432", "Savings", 234343.00, "John Doe", "BR001", "Active"));
+        accountDatabase.put("00987987973433", 
+            new Account("00987987973433", "Current", 150000.00, "Jane Smith", "BR002", "Active"));
+        accountDatabase.put("00987987973434", 
+            new Account("00987987973434", "Savings", 50000.00, "Bob Johnson", "BR001", "Active"));
+    }
+
+    public Account getAccountByNumber(String number) {
+        System.out.println("Fetching account from database: " + number);
+        
+        // Simulate database access delay
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        Account account = accountDatabase.get(number);
+        if (account == null) {
+            // Return default account if not found
+            return new Account(number, "Savings", 10000.00, "Unknown", "BR000", "Active");
+        }
+        return account;
+    }
+
+    public Account createAccount(Account account) {
+        System.out.println("Creating account: " + account.getNumber());
+        accountDatabase.put(account.getNumber(), account);
+        return account;
+    }
+
+    public Account updateAccount(String number, Account account) {
+        System.out.println("Updating account: " + number);
+        accountDatabase.put(number, account);
+        return account;
+    }
+}
+
+// ============================================================================
+// 4.2 LOAN MICROSERVICE - Complete Implementation
+// ============================================================================
+
+/**
+ * ============================================================================
+ * LOAN MICROSERVICE
+ * ============================================================================
+ * 
+ * Project Structure:
+ * loan/
+ * ├── src/
+ * │   └── main/
+ * │       ├── java/
+ * │       │   └── com/
+ * │       │       └── cognizant/
+ * │       │           └── loan/
+ * │       │               ├── LoanApplication.java
+ * │       │               ├── controller/
+ * │       │               │   └── LoanController.java
+ * │       │               ├── model/
+ * │       │               │   └── Loan.java
+ * │       │               └── service/
+ * │       │                   └── LoanService.java
+ * │       └── resources/
+ * │           └── application.properties
+ * └── pom.xml
+ * 
+ * Port: 8082
+ * Application Name: loan-service
+ * ============================================================================
+ */
+
+// ============================================================================
+// LOAN MICROSERVICE - LoanApplication.java
+// ============================================================================
+package com.cognizant.loan;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class LoanApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(LoanApplication.class, args);
+    }
+}
+
+// ============================================================================
+// LOAN MICROSERVICE - Loan.java (Model)
+// ============================================================================
+package com.cognizant.loan.model;
+
+public class Loan {
+    private String number;
+    private String type;
+    private double loanAmount;
+    private double emi;
+    private int tenure;
+    private String customerName;
+    private String status;
+
+    // Constructors
+    public Loan() {
+    }
+
+    public Loan(String number, String type, double loanAmount, 
+                double emi, int tenure, String customerName, String status) {
+        this.number = number;
+        this.type = type;
+        this.loanAmount = loanAmount;
+        this.emi = emi;
+        this.tenure = tenure;
+        this.customerName = customerName;
+        this.status = status;
+    }
+
+    // Getters and Setters
+    public String getNumber() { return number; }
+    public void setNumber(String number) { this.number = number; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public double getLoanAmount() { return loanAmount; }
+    public void setLoanAmount(double loanAmount) { this.loanAmount = loanAmount; }
+    public double getEmi() { return emi; }
+    public void setEmi(double emi) { this.emi = emi; }
+    public int getTenure() { return tenure; }
+    public void setTenure(int tenure) { this.tenure = tenure; }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}
+
+// ============================================================================
+// LOAN MICROSERVICE - LoanController.java
+// ============================================================================
+package com.cognizant.loan.controller;
+
+import com.cognizant.loan.model.Loan;
+import com.cognizant.loan.service.LoanService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/loans")
+public class LoanController {
+
+    @Autowired
+    private LoanService loanService;
+
+    /**
+     * Get loan details by loan number
+     * URL: GET /loans/{number}
+     * Response: Loan details in JSON format
+     */
+    @GetMapping("/{number}")
+    public Loan getLoanByNumber(@PathVariable String number) {
+        System.out.println("=== LOAN SERVICE CALLED ===");
+        System.out.println("Loan Number: " + number);
+        return loanService.getLoanByNumber(number);
+    }
+
+    /**
+     * Create a new loan
+     * URL: POST /loans
+     */
+    @PostMapping
+    public Loan createLoan(@RequestBody Loan loan) {
+        System.out.println("=== CREATING NEW LOAN ===");
+        return loanService.createLoan(loan);
+    }
+
+    /**
+     * Update loan details
+     * URL: PUT /loans/{number}
+     */
+    @PutMapping("/{number}")
+    public Loan updateLoan(@PathVariable String number, @RequestBody Loan loan) {
+        System.out.println("=== UPDATING LOAN ===");
+        System.out.println("Loan Number: " + number);
+        return loanService.updateLoan(number, loan);
+    }
+
+    /**
+     * Delete loan
+     * URL: DELETE /loans/{number}
+     */
+    @DeleteMapping("/{number}")
+    public String deleteLoan(@PathVariable String number) {
+        System.out.println("=== DELETING LOAN ===");
+        System.out.println("Loan Number: " + number);
+        return "Loan " + number + " deleted successfully";
+    }
+}
+
+// ============================================================================
+// LOAN MICROSERVICE - LoanService.java
+// ============================================================================
+package com.cognizant.loan.service;
+
+import com.cognizant.loan.model.Loan;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class LoanService {
+
+    // Simulated database
+    private Map<String, Loan> loanDatabase = new HashMap<>();
+
+    public LoanService() {
+        // Initialize with dummy data
+        loanDatabase.put("H00987987972342", 
+            new Loan("H00987987972342", "Home", 400000.00, 3258.00, 18, "John Doe", "Active"));
+        loanDatabase.put("C00987987973456", 
+            new Loan("C00987987973456", "Car", 300000.00, 2150.00, 12, "Jane Smith", "Active"));
+        loanDatabase.put("P00987987978901", 
+            new Loan("P00987987978901", "Personal", 100000.00, 950.00, 8, "Bob Johnson", "Active"));
+    }
+
+    public Loan getLoanByNumber(String number) {
+        System.out.println("Fetching loan from database: " + number);
+        
+        // Simulate database access delay
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        Loan loan = loanDatabase.get(number);
+        if (loan == null) {
+            // Return default loan if not found
+            return new Loan(number, "Personal", 50000.00, 1000.00, 6, "Unknown", "Active");
+        }
+        return loan;
+    }
+
+    public Loan createLoan(Loan loan) {
+        System.out.println("Creating loan: " + loan.getNumber());
+        loanDatabase.put(loan.getNumber(), loan);
+        return loan;
+    }
+
+    public Loan updateLoan(String number, Loan loan) {
+        System.out.println("Updating loan: " + number);
+        loanDatabase.put(number, loan);
+        return loan;
+    }
+}
+
+// ============================================================================
+// 4.3 EUREKA DISCOVERY SERVER - Complete Implementation
+// ============================================================================
+
+/**
+ * ============================================================================
+ * EUREKA DISCOVERY SERVER
+ * ============================================================================
+ * 
+ * What is Eureka Discovery Server?
+ * - Service registry for microservices
+ * - Services register themselves with Eureka
+ * - Clients discover services through Eureka
+ * - Provides load balancing capabilities
+ * - Enables service resilience
+ * 
+ * How it Works:
+ * 1. Services register with Eureka on startup
+ * 2. Eureka maintains registry of all services
+ * 3. Services send heartbeats to stay registered
+ * 4. Clients query Eureka to find services
+ * 5. Eureka removes unresponsive services
+ * 
+ * Port: 8761
+ * ============================================================================
+ */
+
+// ============================================================================
+// EUREKA SERVER - application.properties
+// ============================================================================
+/*
+# Server Configuration
+server.port=8761
+
+# Application Configuration
+spring.application.name=eureka-discovery-server
+
+# Eureka Server Configuration (No self-registration)
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+# Logging
+logging.level.com.netflix.eureka=OFF
+logging.level.com.netflix.discovery=OFF
+*/
+
+// ============================================================================
+// EUREKA SERVER - EurekaDiscoveryServerApplication.java
+// ============================================================================
+package com.cognizant.eureka;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer  // This annotation enables Eureka Server functionality
+public class EurekaDiscoveryServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaDiscoveryServerApplication.class, args);
+    }
+}
+
+// ============================================================================
+// 4.4 API GATEWAY - Complete Implementation
+// ============================================================================
+
+/**
+ * ============================================================================
+ * API GATEWAY WITH SPRING CLOUD GATEWAY
+ * ============================================================================
+ * 
+ * What is API Gateway?
+ * - Single entry point for all client requests
+ * - Routes requests to appropriate microservices
+ * - Handles cross-cutting concerns:
+ *   - Authentication/Authorization
+ *   - Rate Limiting
+ *   - Caching
+ *   - Request/Response Transformation
+ *   - Logging
+ *   - Metrics
+ * 
+ * Benefits:
+ * 1. Simplifies client code
+ * 2. Reduces number of requests
+ * 3. Implements security policies
+ * 4. Enables protocol translation
+ * 5. Provides centralized monitoring
+ * 
+ * Port: 9090
+ * ============================================================================
+ */
+
+// ============================================================================
+// API GATEWAY - application.properties
+// ============================================================================
+/*
+# Server Configuration
+server.port=9090
+
+# Application Configuration
+spring.application.name=api-gateway
+
+# Gateway Configuration
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true
+
+# Eureka Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+# Logging
+logging.level.org.springframework.cloud.gateway=DEBUG
+logging.level.com.cognizant=DEBUG
+*/
+
+// ============================================================================
+// API GATEWAY - ApiGatewayApplication.java
+// ============================================================================
+package com.cognizant.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ApiGatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ApiGatewayApplication.class, args);
+    }
+}
+
+// ============================================================================
+// API GATEWAY - LogFilter.java (Global Filter)
+// ============================================================================
+package com.cognizant.gateway.filter;
+
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Global Logging Filter
+ * Logs all incoming requests to the API Gateway
+ * 
+ * This is a Global Filter that runs for every request
+ * Demonstrates:
+ * - Request logging with timestamp
+ * - URI, Method, Headers logging
+ * - Response status and duration logging
+ * - Error logging
+ */
+@Component
+public class LogFilter implements GlobalFilter, Ordered {
+
+    private final AtomicInteger requestCounter = new AtomicInteger(0);
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        long startTime = System.currentTimeMillis();
+        int requestId = requestCounter.incrementAndGet();
+        
+        var request = exchange.getRequest();
+        String uri = request.getURI().toString();
+        String method = request.getMethod().name();
+        String path = request.getPath().value();
+        String queryParams = request.getQueryParams().toString();
+        String headers = request.getHeaders().toString();
+
+        // Log request details
+        System.out.println("========================================");
+        System.out.println("API GATEWAY REQUEST #" + requestId);
+        System.out.println("========================================");
+        System.out.println("Timestamp: " + LocalDateTime.now());
+        System.out.println("Method: " + method);
+        System.out.println("URI: " + uri);
+        System.out.println("Path: " + path);
+        System.out.println("Query Params: " + queryParams);
+        System.out.println("Headers: " + headers);
+        System.out.println("========================================");
+
+        // Proceed with the filter chain
+        return chain.filter(exchange)
+            .doOnSuccess(aVoid -> {
+                // Log response details on success
+                long duration = System.currentTimeMillis() - startTime;
+                var response = exchange.getResponse();
+                int status = response.getStatusCode() != null ? 
+                    response.getStatusCode().value() : 0;
+                    
+                System.out.println("========================================");
+                System.out.println("API GATEWAY RESPONSE #" + requestId);
+                System.out.println("========================================");
+                System.out.println("Path: " + path);
+                System.out.println("Status: " + status);
+                System.out.println("Duration: " + duration + " ms");
+                System.out.println("========================================");
+            })
+            .doOnError(error -> {
+                // Log error details
+                long duration = System.currentTimeMillis() - startTime;
+                System.err.println("========================================");
+                System.err.println("API GATEWAY ERROR #" + requestId);
+                System.err.println("========================================");
+                System.err.println("Path: " + path);
+                System.err.println("Error: " + error.getMessage());
+                System.err.println("Duration: " + duration + " ms");
+                System.err.println("========================================");
+                error.printStackTrace();
+            });
+    }
+
+    @Override
+    public int getOrder() {
+        return -1; // Run before other filters
+    }
+}
+
+// ============================================================================
+// 4.5 GREET SERVICE - Complete Implementation
+// ============================================================================
+
+/**
+ * ============================================================================
+ * GREET SERVICE
+ * ============================================================================
+ * 
+ * A simple microservice that demonstrates:
+ * - REST API creation
+ * - Eureka registration
+ * - Service discovery
+ * - API Gateway routing
+ * 
+ * Port: 8083
+ * Application Name: greet-service
+ * ============================================================================
+ */
+
+// ============================================================================
+// GREET SERVICE - GreetApplication.java
+// ============================================================================
+package com.cognizant.greet;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class GreetServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(GreetServiceApplication.class, args);
+    }
+}
+
+// ============================================================================
+// GREET SERVICE - GreetController.java
+// ============================================================================
+package com.cognizant.greet.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/greet")
+public class GreetController {
+
+    @GetMapping
+    public Map<String, String> greet() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Hello World!");
+        response.put("service", "greet-service");
+        response.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        return response;
+    }
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello from Greet Service!";
+    }
+}
+
+// ============================================================================
+// GREET SERVICE - application.properties
+// ============================================================================
+/*
+# Application Configuration
+spring.application.name=greet-service
+server.port=8083
+
+# Eureka Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+# Logging
+logging.level.com.cognizant=DEBUG
+*/
+
+// ============================================================================
+// PART 5: STARTUP ORDER AND TESTING
+// ============================================================================
+
+/**
+ * ============================================================================
+ * STARTUP ORDER (IMPORTANT!)
+ * ============================================================================
+ * 
+ * 1. Start Eureka Discovery Server first
+ *    - Run: EurekaDiscoveryServerApplication
+ *    - Access: http://localhost:8761
+ *    - You should see the Eureka dashboard
+ * 
+ * 2. Start the Microservices
+ *    - Run: AccountApplication (Port: 8081)
+ *    - Run: LoanApplication (Port: 8082)
+ *    - Run: GreetServiceApplication (Port: 8083)
+ *    - Wait for each to register with Eureka
+ * 
+ * 3. Start the API Gateway
+ *    - Run: ApiGatewayApplication (Port: 9090)
+ *    - Gateway will register with Eureka
+ * 
+ * 4. Verification Steps:
+ *    a. Check Eureka Dashboard:
+ *       - http://localhost:8761
+ *       - All services should be listed
+ * 
+ *    b. Test Direct Service Access:
+ *       - Account: http://localhost:8081/accounts/00987987973432
+ *       - Loan: http://localhost:8082/loans/H00987987972342
+ *       - Greet: http://localhost:8083/greet
+ * 
+ *    c. Test Through API Gateway:
+ *       - Account: http://localhost:9090/account-service/accounts/00987987973432
+ *       - Loan: http://localhost:9090/loan-service/loans/H00987987972342
+ *       - Greet: http://localhost:9090/greet-service/greet
+ * 
+ * ============================================================================
+ * EXPECTED RESPONSES
+ * ============================================================================
+ * 
+ * Account Service Response:
+ * {
+ *   "number": "00987987973432",
+ *   "type": "Savings",
+ *   "balance": 234343.0,
+ *   "customerName": "John Doe",
+ *   "branchCode": "BR001",
+ *   "status": "Active"
+ * }
+ * 
+ * Loan Service Response:
+ * {
+ *   "number": "H00987987972342",
+ *   "type": "Home",
+ *   "loanAmount": 400000.0,
+ *   "emi": 3258.0,
+ *   "tenure": 18,
+ *   "customerName": "John Doe",
+ *   "status": "Active"
+ * }
+ * 
+ * Greet Service Response:
+ * {
+ *   "message": "Hello World!",
+ *   "service": "greet-service",
+ *   "timestamp": "1234567890"
+ * }
+ * 
+ * ============================================================================
+ * API GATEWAY LOG OUTPUT
+ * ============================================================================
+ * 
+ * When you access http://localhost:9090/greet-service/greet, 
+ * the LogFilter will output:
+ * 
+ * ========================================
+ * API GATEWAY REQUEST #1
+ * ========================================
+ * Timestamp: 2024-01-15T10:30:45.123
+ * Method: GET
+ * URI: http://localhost:9090/greet-service/greet
+ * Path: /greet-service/greet
+ * Query Params: {}
+ * Headers: {host=[localhost:9090], connection=[keep-alive], ...}
+ * ========================================
+ * ========================================
+ * API GATEWAY RESPONSE #1
+ * ========================================
+ * Path: /greet-service/greet
+ * Status: 200
+ * Duration: 45 ms
+ * ========================================
+ * 
+ * ============================================================================
+ * TROUBLESHOOTING
+ * ============================================================================
+ * 
+ * Problem 1: Port already in use
+ * Solution: 
+ * - Account: Change server.port=8081
+ * - Loan: Change server.port=8082
+ * - Gateway: Change server.port=9090
+ * 
+ * Problem 2: Service not registered with Eureka
+ * Solution:
+ * - Check if Eureka server is running on http://localhost:8761
+ * - Verify spring.application.name is set
+ * - Check eureka.client.service-url.defaultZone
+ * - Check network connectivity
+ * 
+ * Problem 3: Gateway cannot route to service
+ * Solution:
+ * - Ensure spring.cloud.gateway.discovery.locator.enabled=true
+ * - Ensure service is registered with Eureka
+ * - Use correct service name in URL (case-sensitive)
+ * 
+ * Problem 4: 404 Not Found
+ * Solution:
+ * - Verify endpoint path is correct
+ * - Check if service is running
+ * - Verify route configuration
+ * - Check if service is registered with Eureka
+ * 
+ * Problem 5: 500 Internal Server Error
+ * Solution:
+ * - Check service logs for errors
+ * - Verify dependencies are correct
+ * - Check for any exceptions in service
+ * 
+ * ============================================================================
+ * AIRTEL SERVICES ACTIVITY
+ * ============================================================================
+ * 
+ * Airtel Products and Services:
+ * 
+ * 1. TELECOM SERVICES
+ *    - Prepaid Plans
+ *    - Postpaid Plans
+ *    - International Roaming
+ *    - Data Packages
+ *    - Voice Calls
+ *    - SMS Services
+ * 
+ * 2. DIGITAL TV
+ *    - Airtel DTH
+ *    - HD Channels
+ *    - International Channels
+ *    - Recording Services
+ * 
+ * 3. BROADBAND
+ *    - Fiber Broadband
+ *    - Wi-Fi Services
+ *    - Business Broadband
+ * 
+ * 4. PAYMENTS BANK
+ *    - Airtel Payments Bank
+ *    - Savings Accounts
+ *    - Fixed Deposits
+ *    - UPI Services
+ * 
+ * 5. ENTERTAINMENT
+ *    - Airtel Xstream
+ *    - Wynk Music
+ *    - Airtel Movies
+ *    - Live TV
+ * 
+ * 6. BUSINESS SERVICES
+ *    - Airtel Business
+ *    - Cloud Services
+ *    - IoT Solutions
+ *    - MPLS VPN
+ * 
+ * 7. DIGITAL SERVICES
+ *    - Airtel Thanks App
+ *    - Airtel IQ
+ *    - Airtel Security
+ *    - Airtel Cloud
+ * 
+ * ============================================================================
+ * KEY LEARNING OUTCOMES
+ * ============================================================================
+ * 
+ * 1. Understanding Enterprise Applications
+ *    - Large-scale business systems
+ *    - Complex business processes
+ *    - Multiple stakeholders
+ * 
+ * 2. Monolithic Architecture
+ *    - Single deployment unit
+ *    - Single point of failure
+ *    - Scaling challenges
+ * 
+ * 3. Microservices Architecture
+ *    - Independent services
+ *    - Service isolation
+ *    - Technology diversity
+ *    - Scalability
+ * 
+ * 4. Service Discovery with Eureka
+ *    - Service registration
+ *    - Service discovery
+ *    - Health monitoring
+ * 
+ * 5. API Gateway
+ *    - Single entry point
+ *    - Request routing
+ *    - Cross-cutting concerns
+ *    - Global filters
+ * 
+ * 6. Spring Cloud Ecosystem
+ *    - Spring Boot
+ *    - Spring Cloud Gateway
+ *    - Spring Cloud Netflix
+ * 
+ * ============================================================================
+ * NEXT STEPS
+ * ============================================================================
+ * 
+ * 1. Add Database Connectivity
+ *    - Spring Data JPA
+ *    - PostgreSQL/MySQL
+ *    - Hibernate ORM
+ * 
+ * 2. Implement Circuit Breaker
+ *    - Resilience4j
+ *    - Fallback methods
+ *    - Fault tolerance
+ * 
+ * 3. Add Distributed Tracing
+ *    - Spring Cloud Sleuth
+ *    - Zipkin
+ *    - Request tracking
+ * 
+ * 4. Implement Centralized Configuration
+ *    - Spring Cloud Config Server
+ *    - Configuration management
+ *    - Environment-specific configs
+ * 
+ * 5. Add Security
+ *    - Spring Security
+ *    - JWT Authentication
+ *    - Role-based access control
+ * 
+ * 6. Implement Metrics and Monitoring
+ *    - Micrometer
+ *    - Prometheus
+ *    - Grafana dashboards
+ * 
+ * ============================================================================
+ * SUMMARY
+ * ============================================================================
+ * 
+ * Enterprise Applications are complex systems that manage critical business
+ * operations. While monolithic architecture was traditionally used, it has
+ * significant drawbacks including single point of failure and scaling challenges.
+ * 
+ * Microservices architecture addresses these issues by breaking down the
+ * application into independent, loosely coupled services. Services are registered
+ * with a discovery server (Eureka) and accessed through an API Gateway.
+ * 
+ * The hands-on implementation demonstrated:
+ * 1. Creating two microservices (Account and Loan)
+ * 2. Setting up Eureka Discovery Server
+ * 3. Implementing API Gateway with global logging filter
+ * 4. Creating and registering a Greet service
+ * 
+ * This architecture provides better resilience, scalability, and maintainability
+ * for enterprise applications.
+ * 
+ * ============================================================================
+ */
+
+// ============================================================================
+// END OF COMPLETE SOLUTION
+// ============================================================================
