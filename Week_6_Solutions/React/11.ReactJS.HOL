@@ -1,0 +1,397 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Event Examples App - React Event Handling Demo
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// COMPONENT 1: Counter with Event Handling
+// Demonstrates: Event handlers, multiple methods, this keyword
+// ============================================
+
+class Counter extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0,
+      message: ''
+    };
+    
+    // Binding this to event handlers (Alternative 1: Bind in constructor)
+    this.handleIncrement = this.handleIncrement.bind(this);
+    this.handleDecrement = this.handleDecrement.bind(this);
+  }
+
+  // Method 1: Increment counter
+  handleIncrement() {
+    this.setState(prevState => ({
+      count: prevState.count + 1,
+      message: 'Counter increased!'
+    }));
+    // Calling multiple methods
+    this.sayHello();
+  }
+
+  // Method 2: Decrement counter
+  handleDecrement = () => {
+    // Using arrow function (Alternative 2: Arrow function auto-binds)
+    this.setState(prevState => ({
+      count: prevState.count - 1,
+      message: 'Counter decreased!'
+    }));
+  }
+
+  // Method 3: Say Hello with static message
+  sayHello() {
+    alert('👋 Hello! Welcome to React Event Handling!');
+  }
+
+  // Method 4: Handle welcome with argument
+  handleWelcome = (message) => {
+    alert(`🎉 ${message} to React Events!`);
+  }
+
+  // Method 5: Synthetic Event - onPress
+  handleClick = (event) => {
+    // Synthetic event - React's cross-browser wrapper
+    console.log('Synthetic Event:', event);
+    console.log('Event Type:', event.type);
+    console.log('Target:', event.target);
+    alert('🖱️ I was clicked! (Synthetic Event)');
+  }
+
+  render() {
+    return (
+      <div className="component-card">
+        <h2>🔢 Counter with Events</h2>
+        
+        {/* Display counter value */}
+        <div className="counter-display">
+          <span className="count-value">{this.state.count}</span>
+        </div>
+
+        {/* 1. Increment button - invokes multiple methods */}
+        <div className="button-group">
+          <button 
+            className="btn btn-primary" 
+            onClick={this.handleIncrement}
+          >
+            ➕ Increment
+          </button>
+          
+          {/* 2. Decrement button */}
+          <button 
+            className="btn btn-secondary" 
+            onClick={this.handleDecrement}
+          >
+            ➖ Decrement
+          </button>
+        </div>
+
+        {/* 3. Say Welcome button - passes argument to function */}
+        <div className="button-group">
+          <button 
+            className="btn btn-welcome" 
+            onClick={() => this.handleWelcome('Welcome')}
+          >
+            👋 Say Welcome
+          </button>
+        </div>
+
+        {/* 4. Synthetic Event button */}
+        <div className="button-group">
+          <button 
+            className="btn btn-synthetic" 
+            onClick={this.handleClick}
+          >
+            🖱️ Synthetic Event
+          </button>
+        </div>
+
+        {/* Display message */}
+        {this.state.message && (
+          <p className="status-message">{this.state.message}</p>
+        )}
+
+        {/* Event Handling Info */}
+        <div className="event-info">
+          <h4>📚 Event Handling Concepts:</h4>
+          <ul>
+            <li>✅ Event handlers with <strong>onClick</strong></li>
+            <li>✅ Multiple methods called from one event</li>
+            <li>✅ <strong>this</strong> keyword binding</li>
+            <li>✅ Synthetic events</li>
+            <li>✅ Passing arguments to event handlers</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 2: Currency Converter
+// Demonstrates: Form events, handleSubmit, state management
+// ============================================
+
+class CurrencyConverter extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      rupees: '',
+      euros: '',
+      conversionRate: 0.011, // 1 INR = 0.011 EUR (approx)
+      error: '',
+      isConverted: false
+    };
+    
+    // Binding methods
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleReset = this.handleReset.bind(this);
+  }
+
+  // Handle input change event
+  handleInputChange = (event) => {
+    // Using synthetic event
+    const value = event.target.value;
+    console.log('Input changed:', value);
+    
+    // Allow only numbers
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      this.setState({
+        rupees: value,
+        error: '',
+        isConverted: false
+      });
+    } else {
+      this.setState({
+        error: 'Please enter a valid number'
+      });
+    }
+  }
+
+  // Handle form submit event
+  handleSubmit = (event) => {
+    // Prevent default form submission
+    event.preventDefault();
+    console.log('Form submitted!');
+    
+    const { rupees, conversionRate } = this.state;
+    
+    if (!rupees || parseFloat(rupees) === 0) {
+      this.setState({
+        error: 'Please enter a valid amount in Rupees'
+      });
+      return;
+    }
+
+    // Convert Rupees to Euros
+    const euroAmount = (parseFloat(rupees) * conversionRate).toFixed(2);
+    
+    this.setState({
+      euros: euroAmount,
+      isConverted: true,
+      error: ''
+    });
+
+    // Show conversion message
+    alert(`💰 Conversion Complete!\n${rupees} INR = ${euroAmount} EUR`);
+  }
+
+  // Handle reset
+  handleReset = () => {
+    this.setState({
+      rupees: '',
+      euros: '',
+      error: '',
+      isConverted: false
+    });
+  }
+
+  render() {
+    const { rupees, euros, conversionRate, error, isConverted } = this.state;
+
+    return (
+      <div className="component-card converter-card">
+        <h2>💱 Currency Converter</h2>
+        <p className="converter-subtitle">Convert Indian Rupees (INR) to Euros (EUR)</p>
+
+        {/* Form with onSubmit event */}
+        <form onSubmit={this.handleSubmit} className="converter-form">
+          <div className="form-group">
+            <label>🇮🇳 Amount in Rupees (INR):</label>
+            <input
+              type="text"
+              value={rupees}
+              onChange={this.handleInputChange}
+              placeholder="Enter amount in Rupees"
+              className="form-input"
+            />
+            <span className="conversion-rate">
+              Rate: 1 INR = {conversionRate} EUR
+            </span>
+          </div>
+
+          {error && (
+            <div className="error-message">{error}</div>
+          )}
+
+          <div className="button-group">
+            {/* Submit button - handles click event */}
+            <button 
+              type="submit" 
+              className="btn btn-convert"
+            >
+              💱 Convert to Euros
+            </button>
+            
+            {/* Reset button */}
+            <button 
+              type="button" 
+              className="btn btn-reset"
+              onClick={this.handleReset}
+            >
+              🔄 Reset
+            </button>
+          </div>
+
+          {isConverted && euros && (
+            <div className="conversion-result">
+              <h3>✅ Conversion Result</h3>
+              <div className="result-display">
+                <span className="currency-inr">₹{rupees} INR</span>
+                <span className="arrow">➜</span>
+                <span className="currency-eur">€{euros} EUR</span>
+              </div>
+            </div>
+          )}
+        </form>
+
+        {/* Event Handling Info */}
+        <div className="event-info">
+          <h4>📋 Event Types Used:</h4>
+          <ul>
+            <li>✅ <strong>onSubmit</strong> - Form submission</li>
+            <li>✅ <strong>onChange</strong> - Input value change</li>
+            <li>✅ <strong>onClick</strong> - Button click</li>
+            <li>✅ <strong>synthetic event</strong> - Cross-browser event wrapper</li>
+            <li>✅ <strong>preventDefault()</strong> - Prevent default form behavior</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// ============================================
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showCounter: true,
+      showConverter: true
+    };
+  }
+
+  // Toggle components
+  toggleCounter = () => {
+    this.setState(prevState => ({
+      showCounter: !prevState.showCounter
+    }));
+  }
+
+  toggleConverter = () => {
+    this.setState(prevState => ({
+      showConverter: !prevState.showConverter
+    }));
+  }
+
+  render() {
+    const { showCounter, showConverter } = this.state;
+
+    return (
+      <div className="App">
+        {/* Header */}
+        <header className="app-header">
+          <h1>⚡ React Event Handling Examples</h1>
+          <p>Demonstrating Event Handlers, Synthetic Events, and this Keyword</p>
+          
+          <div className="header-controls">
+            <button 
+              className="toggle-btn" 
+              onClick={this.toggleCounter}
+            >
+              {showCounter ? 'Hide' : 'Show'} Counter
+            </button>
+            <button 
+              className="toggle-btn" 
+              onClick={this.toggleConverter}
+            >
+              {showConverter ? 'Hide' : 'Show'} Converter
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="app-main">
+          {/* Render Counter Component */}
+          {showCounter && <Counter />}
+          
+          {/* Render Currency Converter Component */}
+          {showConverter && <CurrencyConverter />}
+
+          {/* Event Handling Summary */}
+          <div className="event-summary">
+            <h3>🎯 React Event Handling Concepts</h3>
+            <div className="concepts-grid">
+              <div className="concept-card">
+                <h4>React Events</h4>
+                <p>React uses synthetic events - cross-browser wrappers around native events</p>
+                <span className="tag">onClick, onChange, onSubmit</span>
+              </div>
+              <div className="concept-card">
+                <h4>Event Handlers</h4>
+                <p>Functions that handle events, can be passed as props or defined in components</p>
+                <span className="tag">handleClick, handleChange</span>
+              </div>
+              <div className="concept-card">
+                <h4>Synthetic Event</h4>
+                <p>React's cross-browser wrapper around native events</p>
+                <span className="tag">event.preventDefault()</span>
+              </div>
+              <div className="concept-card">
+                <h4>Event Naming Convention</h4>
+                <p>camelCase naming: onClick, onChange, onSubmit (not onclick, onchange)</p>
+                <span className="tag">camelCase naming</span>
+              </div>
+              <div className="concept-card">
+                <h4>this Keyword</h4>
+                <p>Need to bind event handlers to access 'this' (or use arrow functions)</p>
+                <span className="tag">.bind() or arrow functions</span>
+              </div>
+              <div className="concept-card">
+                <h4>Passing Arguments</h4>
+                <p>Pass arguments to event handlers using arrow functions</p>
+                <span className="tag">() => handleClick('arg')</span>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="app-footer">
+          <p>© 2026 Event Examples App | React Event Handling Demo</p>
+          <p className="footer-sub">Synthetic Events • Event Handlers • this Keyword</p>
+        </footer>
+      </div>
+    );
+  }
+}
+
+export default App;
