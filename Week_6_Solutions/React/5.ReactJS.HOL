@@ -1,0 +1,303 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Cohort Dashboard - CSS Modules & Inline Styles Demo
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// CSS MODULE STYLES (Included as JavaScript Object)
+// Normally this would be in CohortDetails.module.css
+// ============================================
+
+const styles = {
+  // Box class with required properties
+  box: {
+    width: '300px',
+    display: 'inline-block',
+    margin: '10px',
+    paddingTop: '10px',
+    paddingBottom: '10px',
+    paddingLeft: '20px',
+    paddingRight: '20px',
+    border: '1px solid black',
+    borderRadius: '10px',
+    backgroundColor: '#f9f9f9',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    verticalAlign: 'top',
+    minHeight: '200px'
+  },
+  // Tag selector for <dt> element - font weight 500
+  dt: {
+    fontWeight: '500',
+    color: '#333',
+    marginTop: '8px'
+  },
+  // Tag selector for <dd> element
+  dd: {
+    marginLeft: '20px',
+    color: '#555',
+    marginBottom: '8px'
+  },
+  // Heading styles for cohort status
+  headingOngoing: {
+    color: 'green',
+    fontSize: '20px',
+    borderBottom: '2px solid green',
+    paddingBottom: '10px'
+  },
+  headingOther: {
+    color: 'blue',
+    fontSize: '20px',
+    borderBottom: '2px solid blue',
+    paddingBottom: '10px'
+  },
+  // Container for all cohorts
+  container: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    padding: '20px',
+    gap: '10px'
+  },
+  // Dashboard header
+  header: {
+    textAlign: 'center',
+    padding: '20px',
+    backgroundColor: '#1a237e',
+    color: 'white',
+    borderRadius: '10px 10px 0 0'
+  },
+  // Cohort detail item
+  detailItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '5px 0',
+    borderBottom: '1px solid #eee'
+  },
+  // Label style
+  label: {
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  // Value style
+  value: {
+    color: '#555'
+  },
+  // Status badge
+  statusBadge: {
+    display: 'inline-block',
+    padding: '3px 12px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: 'bold'
+  },
+  ongoingBadge: {
+    backgroundColor: '#4caf50',
+    color: 'white'
+  },
+  completedBadge: {
+    backgroundColor: '#2196f3',
+    color: 'white'
+  },
+  upcomingBadge: {
+    backgroundColor: '#ff9800',
+    color: 'white'
+  }
+};
+
+// ============================================
+// COHORT DETAILS COMPONENT
+// ============================================
+
+class CohortDetails extends Component {
+  constructor(props) {
+    super(props);
+    // Component state to hold cohort data
+    this.state = {
+      cohorts: [
+        {
+          id: 1,
+          name: 'Java Full Stack',
+          status: 'ongoing',
+          startDate: '2026-01-15',
+          endDate: '2026-06-15',
+          participants: 25,
+          trainer: 'John Smith'
+        },
+        {
+          id: 2,
+          name: 'Python for Data Science',
+          status: 'completed',
+          startDate: '2025-09-01',
+          endDate: '2025-12-20',
+          participants: 30,
+          trainer: 'Sarah Johnson'
+        },
+        {
+          id: 3,
+          name: 'React Native Development',
+          status: 'ongoing',
+          startDate: '2026-02-01',
+          endDate: '2026-07-30',
+          participants: 20,
+          trainer: 'Mike Williams'
+        },
+        {
+          id: 4,
+          name: 'Cloud Architecture (AWS)',
+          status: 'upcoming',
+          startDate: '2026-04-01',
+          endDate: '2026-09-30',
+          participants: 15,
+          trainer: 'Lisa Brown'
+        },
+        {
+          id: 5,
+          name: 'DevOps with Kubernetes',
+          status: 'completed',
+          startDate: '2025-10-10',
+          endDate: '2026-01-10',
+          participants: 22,
+          trainer: 'Robert Davis'
+        },
+        {
+          id: 6,
+          name: 'Angular & TypeScript',
+          status: 'ongoing',
+          startDate: '2026-01-20',
+          endDate: '2026-06-20',
+          participants: 28,
+          trainer: 'Emily Wilson'
+        }
+      ]
+    };
+  }
+
+  render() {
+    return (
+      <div className="app-container">
+        {/* Dashboard Header */}
+        <header style={styles.header}>
+          <h1>📊 My Academy - Cohort Dashboard</h1>
+          <p>Track ongoing and completed cohorts</p>
+          <div style={{ marginTop: '15px' }}>
+            <span style={{ ...styles.statusBadge, ...styles.ongoingBadge, marginRight: '10px' }}>
+              🟢 Ongoing ({this.state.cohorts.filter(c => c.status === 'ongoing').length})
+            </span>
+            <span style={{ ...styles.statusBadge, ...styles.completedBadge, marginRight: '10px' }}>
+              🔵 Completed ({this.state.cohorts.filter(c => c.status === 'completed').length})
+            </span>
+            <span style={{ ...styles.statusBadge, ...styles.upcomingBadge }}>
+              🟠 Upcoming ({this.state.cohorts.filter(c => c.status === 'upcoming').length})
+            </span>
+          </div>
+        </header>
+
+        {/* Cohort Cards Container */}
+        <div style={styles.container}>
+          {this.state.cohorts.map(cohort => (
+            <CohortCard 
+              key={cohort.id}
+              cohort={cohort}
+            />
+          ))}
+        </div>
+
+        {/* Footer */}
+        <footer className="app-footer">
+          <p>© 2026 My Academy - Cohort Management System</p>
+          <p style={{ fontSize: '12px', color: '#78909c' }}>
+            Built with React - CSS Modules & Inline Styles
+          </p>
+        </footer>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COHORT CARD COMPONENT
+// ============================================
+
+class CohortCard extends Component {
+  render() {
+    const { cohort } = this.props;
+    
+    // Determine heading style based on status
+    const headingStyle = cohort.status === 'ongoing' 
+      ? styles.headingOngoing 
+      : styles.headingOther;
+    
+    // Get status badge style
+    let badgeStyle = styles.ongoingBadge;
+    if (cohort.status === 'completed') {
+      badgeStyle = styles.completedBadge;
+    } else if (cohort.status === 'upcoming') {
+      badgeStyle = styles.upcomingBadge;
+    }
+
+    return (
+      // Applying box class to container div using style property
+      <div style={styles.box}>
+        {/* H3 with dynamic color based on status */}
+        <h3 style={headingStyle}>
+          {cohort.name}
+          <span style={{ 
+            ...styles.statusBadge, 
+            ...badgeStyle,
+            marginLeft: '10px',
+            fontSize: '11px'
+          }}>
+            {cohort.status.toUpperCase()}
+          </span>
+        </h3>
+        
+        {/* Cohort details using <dt> and <dd> */}
+        <dl>
+          <dt style={styles.dt}>📅 Start Date:</dt>
+          <dd style={styles.dd}>{cohort.startDate}</dd>
+          
+          <dt style={styles.dt}>📅 End Date:</dt>
+          <dd style={styles.dd}>{cohort.endDate}</dd>
+          
+          <dt style={styles.dt}>👥 Participants:</dt>
+          <dd style={styles.dd}>{cohort.participants}</dd>
+          
+          <dt style={styles.dt}>👨‍🏫 Trainer:</dt>
+          <dd style={styles.dd}>{cohort.trainer}</dd>
+        </dl>
+
+        {/* Status indicator */}
+        <div style={{ 
+          marginTop: '15px',
+          padding: '8px',
+          textAlign: 'center',
+          backgroundColor: cohort.status === 'ongoing' ? '#e8f5e9' : '#e3f2fd',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: cohort.status === 'ongoing' ? '#2e7d32' : '#0d47a1'
+        }}>
+          {cohort.status === 'ongoing' ? '🟢 Cohort Active' : 
+           cohort.status === 'completed' ? '✅ Cohort Completed' : 
+           '📅 Cohort Upcoming'}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// ============================================
+
+function App() {
+  return (
+    <div className="App">
+      <CohortDetails />
+    </div>
+  );
+}
+
+export default App;
