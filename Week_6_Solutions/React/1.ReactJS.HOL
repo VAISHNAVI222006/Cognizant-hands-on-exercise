@@ -1,0 +1,34 @@
+// ============================================
+// FILE: App.js (located in src folder)
+// ============================================
+
+// Import React library to create React components
+import React from 'react';
+
+// Import CSS file for styling (optional)
+import './App.css';
+
+// Define the main App component as a functional component
+// This component will render the content of our application
+function App() {
+  // Return JSX (JavaScript XML) which describes what should be rendered on the screen
+  return (
+    // The outermost element must be a single parent element (div in this case)
+    <div className="App">
+      {/* 
+        Main heading displaying welcome message
+        This is the content that will appear on the webpage
+      */}
+      <h1>Welcome to the first session of React</h1>
+      
+      {/* 
+        Additional content to demonstrate React features
+        This shows how you can add multiple elements
+      */}
+      <p>This is a Single-Page Application (SPA) built with React</p>
+    </div>
+  );
+}
+
+// Export the App component so it can be imported in index.js
+export default App;
