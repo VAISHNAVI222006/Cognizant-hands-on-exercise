@@ -1,0 +1,479 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Blogger App - Multiple Conditional Rendering Techniques
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// DATA FOR ALL COMPONENTS
+// ============================================
+
+// Book Data
+const bookData = [
+  { id: 1, title: 'The Art of React', author: 'John Doe', pages: 350, genre: 'Programming', rating: 4.8 },
+  { id: 2, title: 'JavaScript Mastery', author: 'Jane Smith', pages: 420, genre: 'Programming', rating: 4.9 },
+  { id: 3, title: 'Design Patterns', author: 'Robert Martin', pages: 300, genre: 'Software Design', rating: 4.7 },
+  { id: 4, title: 'Clean Code', author: 'Uncle Bob', pages: 460, genre: 'Programming', rating: 4.9 }
+];
+
+// Blog Data
+const blogData = [
+  { id: 1, title: 'Understanding React Hooks', author: 'Sarah Johnson', category: 'React', views: 15200, likes: 340 },
+  { id: 2, title: 'CSS in 2026', author: 'Mike Williams', category: 'CSS', views: 8900, likes: 210 },
+  { id: 3, title: 'Node.js Best Practices', author: 'Emily Davis', category: 'Node.js', views: 12300, likes: 280 }
+];
+
+// Course Data
+const courseData = [
+  { id: 1, title: 'Full Stack Web Development', instructor: 'Dr. Alan Turing', duration: '12 weeks', students: 450, level: 'Advanced' },
+  { id: 2, title: 'React Native Mobile Apps', instructor: 'Grace Hopper', duration: '8 weeks', students: 320, level: 'Intermediate' },
+  { id: 3, title: 'Data Science with Python', instructor: 'Ada Lovelace', duration: '10 weeks', students: 580, level: 'Intermediate' },
+  { id: 4, title: 'Cloud Computing AWS', instructor: 'Steve Jobs', duration: '6 weeks', students: 210, level: 'Beginner' }
+];
+
+// ============================================
+// COMPONENT 1: Book Details
+// ============================================
+
+class BookDetails extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showAllBooks: true,
+      selectedGenre: 'All'
+    };
+  }
+
+  // Method 1: Using if-else for conditional rendering
+  renderBooks() {
+    const { showAllBooks } = this.state;
+    
+    if (!showAllBooks) {
+      return <div className="empty-message">📚 No books to display</div>;
+    }
+
+    // Using filter to show only selected genre
+    const filteredBooks = this.state.selectedGenre === 'All' 
+      ? bookData 
+      : bookData.filter(book => book.genre === this.state.selectedGenre);
+
+    if (filteredBooks.length === 0) {
+      return <div className="empty-message">No books found for this genre</div>;
+    }
+
+    return filteredBooks.map(book => (
+      <div key={book.id} className="item-card book-card">
+        <h3>{book.title}</h3>
+        <p className="author">✍️ {book.author}</p>
+        <div className="book-details">
+          <span>📖 {book.pages} pages</span>
+          <span>🏷️ {book.genre}</span>
+          <span className="rating">⭐ {book.rating}</span>
+        </div>
+      </div>
+    ));
+  }
+
+  toggleBooks = () => {
+    this.setState(prevState => ({
+      showAllBooks: !prevState.showAllBooks
+    }));
+  }
+
+  changeGenre = (genre) => {
+    this.setState({ selectedGenre: genre });
+  }
+
+  render() {
+    // Method 2: Using element variables
+    let headerMessage;
+    if (this.state.showAllBooks) {
+      headerMessage = <span className="status-active">🟢 Showing all books</span>;
+    } else {
+      headerMessage = <span className="status-inactive">🔴 Books hidden</span>;
+    }
+
+    return (
+      <div className="component-container">
+        <div className="component-header">
+          <h2>📚 Book Details</h2>
+          {headerMessage}
+        </div>
+
+        {/* Method 3: Using ternary operator for conditional classes */}
+        <div className="controls">
+          <button 
+            className={`toggle-btn ${this.state.showAllBooks ? 'active' : 'inactive'}`}
+            onClick={this.toggleBooks}
+          >
+            {this.state.showAllBooks ? 'Hide Books' : 'Show Books'}
+          </button>
+          
+          <div className="genre-filters">
+            {['All', 'Programming', 'Software Design'].map(genre => (
+              <button
+                key={genre}
+                className={`genre-btn ${this.state.selectedGenre === genre ? 'selected' : ''}`}
+                onClick={() => this.changeGenre(genre)}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="items-container">
+          {this.renderBooks()}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 2: Blog Details
+// ============================================
+
+class BlogDetails extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      viewMode: 'all', // 'all', 'popular', 'recent'
+      showBlogs: true
+    };
+  }
+
+  // Method 4: Using switch statement for conditional rendering
+  renderBlogs() {
+    const { viewMode, showBlogs } = this.state;
+
+    // Method 5: Using logical && operator for conditional rendering
+    if (!showBlogs) {
+      return null; // Prevents rendering
+    }
+
+    let filteredBlogs = [...blogData];
+
+    switch(viewMode) {
+      case 'popular':
+        filteredBlogs = blogData.filter(blog => blog.views > 10000);
+        break;
+      case 'recent':
+        filteredBlogs = blogData.slice(0, 2);
+        break;
+      default:
+        filteredBlogs = blogData;
+    }
+
+    return filteredBlogs.map(blog => (
+      <div key={blog.id} className="item-card blog-card">
+        <h3>{blog.title}</h3>
+        <p className="author">✍️ {blog.author}</p>
+        <div className="blog-details">
+          <span className="category">📂 {blog.category}</span>
+          <span>👁️ {blog.views.toLocaleString()} views</span>
+          <span>❤️ {blog.likes} likes</span>
+        </div>
+      </div>
+    ));
+  }
+
+  toggleBlogs = () => {
+    this.setState(prevState => ({
+      showBlogs: !prevState.showBlogs
+    }));
+  }
+
+  setViewMode = (mode) => {
+    this.setState({ viewMode: mode });
+  }
+
+  render() {
+    // Method 6: Using conditional rendering with && operator
+    return (
+      <div className="component-container">
+        <div className="component-header">
+          <h2>📝 Blog Details</h2>
+          {this.state.showBlogs && <span className="status-active">🟢 Active</span>}
+          {!this.state.showBlogs && <span className="status-inactive">🔴 Inactive</span>}
+        </div>
+
+        <div className="controls">
+          <button 
+            className="toggle-btn"
+            onClick={this.toggleBlogs}
+          >
+            {this.state.showBlogs ? 'Hide Blogs' : 'Show Blogs'}
+          </button>
+          
+          <div className="view-filters">
+            {['all', 'popular', 'recent'].map(mode => (
+              <button
+                key={mode}
+                className={`view-btn ${this.state.viewMode === mode ? 'selected' : ''}`}
+                onClick={() => this.setViewMode(mode)}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="items-container">
+          {/* Method 7: Using ternary operator for conditional rendering */}
+          {this.state.showBlogs ? (
+            this.renderBlogs()
+          ) : (
+            <div className="empty-message">📝 Blogs are currently hidden</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 3: Course Details
+// ============================================
+
+class CourseDetails extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      searchTerm: '',
+      filterLevel: 'All',
+      showCourses: true
+    };
+  }
+
+  // Method 8: Using conditional rendering with multiple conditions
+  renderCourses() {
+    const { searchTerm, filterLevel, showCourses } = this.state;
+
+    if (!showCourses) {
+      return null;
+    }
+
+    let filteredCourses = courseData;
+
+    // Filter by search term
+    if (searchTerm.trim() !== '') {
+      filteredCourses = filteredCourses.filter(course =>
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by level
+    if (filterLevel !== 'All') {
+      filteredCourses = filteredCourses.filter(course =>
+        course.level === filterLevel
+      );
+    }
+
+    if (filteredCourses.length === 0) {
+      return <div className="empty-message">🎯 No courses found matching your criteria</div>;
+    }
+
+    return filteredCourses.map(course => (
+      <div key={course.id} className="item-card course-card">
+        <h3>{course.title}</h3>
+        <p className="instructor">👨‍🏫 {course.instructor}</p>
+        <div className="course-details">
+          <span>⏱️ {course.duration}</span>
+          <span>👥 {course.students} students</span>
+          <span className={`level-badge level-${course.level.toLowerCase()}`}>
+            {course.level}
+          </span>
+        </div>
+      </div>
+    ));
+  }
+
+  handleSearch = (event) => {
+    this.setState({ searchTerm: event.target.value });
+  }
+
+  setLevelFilter = (level) => {
+    this.setState({ filterLevel: level });
+  }
+
+  toggleCourses = () => {
+    this.setState(prevState => ({
+      showCourses: !prevState.showCourses
+    }));
+  }
+
+  render() {
+    const { searchTerm, filterLevel, showCourses } = this.state;
+
+    return (
+      <div className="component-container">
+        <div className="component-header">
+          <h2>🎓 Course Details</h2>
+          {showCourses && <span className="status-active">🟢 Available</span>}
+          {!showCourses && <span className="status-inactive">🔴 Unavailable</span>}
+        </div>
+
+        <div className="controls">
+          <button 
+            className="toggle-btn"
+            onClick={this.toggleCourses}
+          >
+            {showCourses ? 'Hide Courses' : 'Show Courses'}
+          </button>
+        </div>
+
+        {/* Conditional rendering for search and filters */}
+        {showCourses && (
+          <div className="search-filters">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="🔍 Search courses by title or instructor..."
+              value={searchTerm}
+              onChange={this.handleSearch}
+            />
+            <div className="level-filters">
+              {['All', 'Beginner', 'Intermediate', 'Advanced'].map(level => (
+                <button
+                  key={level}
+                  className={`level-btn ${filterLevel === level ? 'selected' : ''}`}
+                  onClick={() => this.setLevelFilter(level)}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="items-container">
+          {this.renderCourses()}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// Demonstrates all conditional rendering methods
+// ============================================
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeComponent: 'books', // 'books', 'blogs', 'courses'
+      showAllComponents: true
+    };
+  }
+
+  // Method 9: Using element variables for conditional rendering
+  renderActiveComponent() {
+    const { activeComponent } = this.state;
+
+    // Using element variable
+    let component;
+
+    if (activeComponent === 'books') {
+      component = <BookDetails />;
+    } else if (activeComponent === 'blogs') {
+      component = <BlogDetails />;
+    } else if (activeComponent === 'courses') {
+      component = <CourseDetails />;
+    }
+
+    return component;
+  }
+
+  changeComponent = (component) => {
+    this.setState({ activeComponent: component });
+  }
+
+  toggleAllComponents = () => {
+    this.setState(prevState => ({
+      showAllComponents: !prevState.showAllComponents
+    }));
+  }
+
+  render() {
+    const { activeComponent, showAllComponents } = this.state;
+
+    // Method 10: Using logical && to prevent rendering
+    return (
+      <div className="App">
+        <header className="app-header">
+          <h1>📱 Blogger App</h1>
+          <p>Multiple Conditional Rendering Techniques in React</p>
+          <div className="nav-controls">
+            <div className="nav-buttons">
+              {['books', 'blogs', 'courses'].map(comp => (
+                <button
+                  key={comp}
+                  className={`nav-btn ${activeComponent === comp ? 'active' : ''}`}
+                  onClick={() => this.changeComponent(comp)}
+                >
+                  {comp.charAt(0).toUpperCase() + comp.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button 
+              className="toggle-all-btn"
+              onClick={this.toggleAllComponents}
+            >
+              {showAllComponents ? 'Hide All' : 'Show All'}
+            </button>
+          </div>
+        </header>
+
+        {/* Method 11: Conditional rendering with && operator */}
+        {showAllComponents && (
+          <main className="app-main">
+            {this.renderActiveComponent()}
+          </main>
+        )}
+
+        {/* Method 12: Conditional rendering with ternary operator */}
+        {!showAllComponents && (
+          <main className="app-main">
+            <div className="empty-state">
+              <h2>👀 All components are hidden</h2>
+              <p>Click "Show All" to display the components</p>
+            </div>
+          </main>
+        )}
+
+        {/* Conditional Rendering Summary */}
+        <footer className="app-footer">
+          <div className="footer-content">
+            <h4>🎯 Conditional Rendering Techniques Used</h4>
+            <div className="techniques-grid">
+              <span>✅ if-else statements</span>
+              <span>✅ Element Variables</span>
+              <span>✅ Ternary Operators</span>
+              <span>✅ Logical && Operator</span>
+              <span>✅ Switch Statements</span>
+              <span>✅ Multiple Conditions</span>
+              <span>✅ Prevent Rendering (null)</span>
+              <span>✅ Conditional Classes</span>
+              <span>✅ List Keys</span>
+              <span>✅ map() Function</span>
+            </div>
+            <div className="component-count">
+              <span>📚 Books: {bookData.length}</span>
+              <span>📝 Blogs: {blogData.length}</span>
+              <span>🎓 Courses: {courseData.length}</span>
+            </div>
+          </div>
+          <p className="footer-copy">© 2026 Blogger App | Conditional Rendering Demo</p>
+        </footer>
+      </div>
+    );
+  }
+}
+
+export default App;
