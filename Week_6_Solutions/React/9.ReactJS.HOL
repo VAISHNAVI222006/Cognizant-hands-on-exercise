@@ -1,0 +1,317 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Cricket App - ES6 Features Demo
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// COMPONENT 1: ListofPlayers
+// Demonstrates: map(), arrow functions, filter()
+// ============================================
+
+class ListofPlayers extends Component {
+  constructor(props) {
+    super(props);
+    
+    // Array with 11 players and their scores using let (block scope)
+    let playersData = [
+      { name: 'Virat Kohli', score: 95 },
+      { name: 'Rohit Sharma', score: 82 },
+      { name: 'KL Rahul', score: 45 },
+      { name: 'Suryakumar Yadav', score: 88 },
+      { name: 'Rishabh Pant', score: 62 },
+      { name: 'Hardik Pandya', score: 71 },
+      { name: 'Ravindra Jadeja', score: 55 },
+      { name: 'Jasprit Bumrah', score: 30 },
+      { name: 'Mohammed Shami', score: 25 },
+      { name: 'Yuzvendra Chahal', score: 20 },
+      { name: 'Bhuvneshwar Kumar', score: 18 }
+    ];
+    
+    // Using map() feature of ES6 - Display all players
+    this.allPlayers = playersData.map((player, index) => ({
+      id: index + 1,
+      ...player
+    }));
+    
+    // Using arrow functions and filter() - Filter players with scores below 70
+    this.lowScorePlayers = playersData
+      .filter(player => player.score < 70)  // Arrow function
+      .map(player => ({
+        ...player,
+        status: 'Needs Improvement'
+      }));
+    
+    // Using const - fixed team name
+    this.teamName = 'Indian Cricket Team';
+  }
+
+  render() {
+    return (
+      <div className="component-container">
+        <h2 className="component-title">🏏 Player List</h2>
+        
+        {/* Using const for team name */}
+        <h3 className="team-name">{this.teamName}</h3>
+        
+        {/* All Players Section using map() */}
+        <div className="section">
+          <h4>📊 All Players (Using map()):</h4>
+          <div className="players-grid">
+            {this.allPlayers.map(player => (
+              <div key={player.id} className="player-card">
+                <span className="player-name">{player.name}</span>
+                <span className={`player-score ${player.score >= 70 ? 'high' : 'low'}`}>
+                  {player.score}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filtered Players Section using arrow functions and filter() */}
+        <div className="section">
+          <h4>📉 Players with Score Below 70 (Using filter() & arrow functions):</h4>
+          <div className="players-grid">
+            {this.lowScorePlayers.map((player, index) => (
+              <div key={index} className="player-card low-score">
+                <span className="player-name">{player.name}</span>
+                <span className="player-score low">{player.score}</span>
+                <span className="player-status">{player.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ES6 Features Info */}
+        <div className="es6-features">
+          <h4>ES6 Features Used:</h4>
+          <ul>
+            <li>✅ <strong>let</strong> - Block-scoped variable for playersData</li>
+            <li>✅ <strong>const</strong> - Team name (cannot be reassigned)</li>
+            <li>✅ <strong>map()</strong> - Transforming array data</li>
+            <li>✅ <strong>Arrow Functions</strong> - (player => player.score &lt; 70)</li>
+            <li>✅ <strong>filter()</strong> - Filtering players with low scores</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 2: IndianPlayers
+// Demonstrates: Destructuring, Spread operator, Set(), Map()
+// ============================================
+
+class IndianPlayers extends Component {
+  constructor(props) {
+    super(props);
+    
+    // Destructuring assignment - Extracting values from arrays
+    // T20 Players Array
+    const t20Players = ['Virat Kohli', 'Rohit Sharma', 'Suryakumar Yadav', 'Hardik Pandya', 'Rishabh Pant'];
+    
+    // Ranji Trophy Players Array
+    const ranjiPlayers = ['Cheteshwar Pujara', 'Ajinkya Rahane', 'Shreyas Iyer', 'Prithvi Shaw', 'Hanuma Vihari'];
+    
+    // Destructuring - Extracting odd and even team players
+    // Using destructuring to get first 5 and next 5 players
+    const [player1, player2, player3, player4, player5] = t20Players;
+    const [player6, player7, player8, player9, player10] = ranjiPlayers;
+    
+    // Using Set() - Creates a collection of unique values
+    const uniquePlayers = new Set([...t20Players, ...ranjiPlayers]);
+    
+    // Using Map() - Stores key-value pairs
+    const playerMap = new Map();
+    playerMap.set('T20 Captain', 'Virat Kohli');
+    playerMap.set('Test Captain', 'Rohit Sharma');
+    playerMap.set('Vice Captain', 'Hardik Pandya');
+    
+    // Using spread operator (...) to merge arrays
+    const mergedPlayers = [...t20Players, ...ranjiPlayers];
+    
+    // Store in state
+    this.state = {
+      t20Players,
+      ranjiPlayers,
+      mergedPlayers,
+      player1, player2, player3, player4, player5,
+      player6, player7, player8, player9, player10,
+      uniquePlayers: Array.from(uniquePlayers),
+      playerMap,
+      oddTeamPlayers: [player1, player3, player5, player7, player9],
+      evenTeamPlayers: [player2, player4, player6, player8, player10]
+    };
+  }
+
+  render() {
+    const { 
+      t20Players, 
+      ranjiPlayers, 
+      mergedPlayers,
+      oddTeamPlayers,
+      evenTeamPlayers,
+      uniquePlayers,
+      playerMap
+    } = this.state;
+
+    return (
+      <div className="component-container">
+        <h2 className="component-title">🇮🇳 Indian Players</h2>
+        
+        {/* Odd Team Players using Destructuring */}
+        <div className="section">
+          <h4>🏏 Odd Team Players (Using Destructuring):</h4>
+          <div className="players-grid">
+            {oddTeamPlayers.map((player, index) => (
+              <div key={index} className="player-card odd-team">
+                <span className="player-name">{player}</span>
+                <span className="team-badge">Team {index + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Even Team Players using Destructuring */}
+        <div className="section">
+          <h4>🏏 Even Team Players (Using Destructuring):</h4>
+          <div className="players-grid">
+            {evenTeamPlayers.map((player, index) => (
+              <div key={index} className="player-card even-team">
+                <span className="player-name">{player}</span>
+                <span className="team-badge">Team {index + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Merged Arrays using Spread Operator */}
+        <div className="section">
+          <h4>🔄 Merged Players (Using Spread Operator):</h4>
+          <div className="players-grid">
+            {mergedPlayers.map((player, index) => (
+              <div key={index} className="player-card merged">
+                <span className="player-name">{player}</span>
+                <span className="player-type">
+                  {t20Players.includes(player) ? 'T20' : 'Ranji Trophy'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Set() - Unique Players */}
+        <div className="section">
+          <h4>⭐ Unique Players (Using Set()):</h4>
+          <div className="players-grid">
+            {uniquePlayers.map((player, index) => (
+              <div key={index} className="player-card unique">
+                <span className="player-name">{player}</span>
+                <span className="unique-badge">✓</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Map() - Key-Value Pairs */}
+        <div className="section">
+          <h4>📋 Player Roles (Using Map()):</h4>
+          <div className="role-grid">
+            {Array.from(playerMap.entries()).map(([role, player], index) => (
+              <div key={index} className="role-card">
+                <span className="role-name">{role}</span>
+                <span className="player-name">→ {player}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ES6 Features Info */}
+        <div className="es6-features">
+          <h4>ES6 Features Used:</h4>
+          <ul>
+            <li>✅ <strong>Destructuring</strong> - Extracting odd/even team players</li>
+            <li>✅ <strong>Spread Operator (...)</strong> - Merging T20 and Ranji arrays</li>
+            <li>✅ <strong>Set()</strong> - Creating unique player collection</li>
+            <li>✅ <strong>Map()</strong> - Storing key-value pairs for player roles</li>
+            <li>✅ <strong>Class Inheritance</strong> - Extending Component class</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// Demonstrates: Flag variable for conditional rendering
+// ============================================
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    // Flag variable - Change this to false to see the other component
+    this.state = {
+      flag: true  // Set to false to display IndianPlayers component
+    };
+  }
+
+  // Method to toggle between components
+  toggleComponent = () => {
+    this.setState(prevState => ({
+      flag: !prevState.flag
+    }));
+  }
+
+  render() {
+    const { flag } = this.state;
+
+    return (
+      <div className="App">
+        {/* Header */}
+        <header className="app-header">
+          <h1>🏏 Cricket Player Management</h1>
+          <p>Demonstrating ES6 Features in React</p>
+          <div className="toggle-container">
+            <button onClick={this.toggleComponent} className="toggle-btn">
+              {flag ? 'Show Indian Players' : 'Show List of Players'}
+            </button>
+            <span className="current-view">
+              Current View: {flag ? 'List of Players' : 'Indian Players'}
+            </span>
+          </div>
+        </header>
+
+        {/* Conditional Rendering using Flag variable */}
+        <main className="app-main">
+          {flag ? <ListofPlayers /> : <IndianPlayers />}
+        </main>
+
+        {/* ES6 Features Summary */}
+        <footer className="app-footer">
+          <div className="footer-content">
+            <h4>ES6 Features Demonstrated:</h4>
+            <div className="features-grid">
+              <span>✓ let & const</span>
+              <span>✓ Arrow Functions</span>
+              <span>✓ map()</span>
+              <span>✓ filter()</span>
+              <span>✓ Destructuring</span>
+              <span>✓ Spread Operator</span>
+              <span>✓ Set()</span>
+              <span>✓ Map()</span>
+              <span>✓ Class Inheritance</span>
+            </div>
+          </div>
+          <p className="footer-copy">© 2026 Cricket App | ES6 Features Demo</p>
+        </footer>
+      </div>
+    );
+  }
+}
+
+export default App;
