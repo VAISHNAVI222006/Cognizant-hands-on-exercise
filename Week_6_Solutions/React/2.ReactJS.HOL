@@ -1,0 +1,269 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Student Management Portal - All Components in One File
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// COMPONENT 1: Home (Class Component)
+// ============================================
+
+class Home extends Component {
+  // Component constructor - used for initializing state
+  constructor(props) {
+    super(props); // Call parent class constructor
+    this.state = {
+      message: "Welcome to the Home page of Student Management Portal"
+    };
+  }
+
+  // render() function - returns JSX to be displayed
+  render() {
+    return (
+      <div style={styles.homeContainer}>
+        <h1 style={styles.heading}>🏠 Home</h1>
+        <p style={styles.message}>{this.state.message}</p>
+        <p style={styles.componentType}>📌 This is a Class Component</p>
+        <p style={styles.componentInfo}>
+          ✅ Uses constructor() to initialize state<br/>
+          ✅ Uses render() method to return JSX
+        </p>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 2: About (Functional Component)
+// ============================================
+
+function About() {
+  // Functional component - no constructor needed
+  const message = "Welcome to the About page of the Student Management Portal";
+  
+  return (
+    <div style={styles.aboutContainer}>
+      <h1 style={styles.heading}>ℹ️ About</h1>
+      <p style={styles.message}>{message}</p>
+      <p style={styles.componentType}>📌 This is a Functional Component</p>
+      <p style={styles.componentInfo}>
+        ✅ Simpler syntax - no constructor needed<br/>
+        ✅ Uses hooks for state management (if required)
+      </p>
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENT 3: Contact (Functional Component)
+// ============================================
+
+function Contact() {
+  const message = "Welcome to the Contact page of the Student Management Portal";
+  
+  return (
+    <div style={styles.contactContainer}>
+      <h1 style={styles.heading}>📞 Contact</h1>
+      <p style={styles.message}>{message}</p>
+      <p style={styles.componentType}>📌 This is a Functional Component</p>
+      <div style={styles.contactInfo}>
+        <p>📧 Email: students@portal.com</p>
+        <p>📱 Phone: +1-234-567-8900</p>
+        <p>📍 Location: Student Management Office, Room 101</p>
+        <p>🕐 Hours: Mon-Fri 9:00 AM - 5:00 PM</p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// ============================================
+
+function App() {
+  return (
+    <div className="App">
+      {/* Application Header */}
+      <header style={styles.header}>
+        <h1>🎓 Student Management Portal</h1>
+        <p style={styles.subtitle}>
+          Learning React Components - Class vs Functional Components
+        </p>
+        <div style={styles.badgeContainer}>
+          <span style={styles.badge}>SPA Application</span>
+          <span style={styles.badge}>React Components</span>
+          <span style={styles.badge}>Virtual DOM</span>
+        </div>
+      </header>
+
+      {/* Main Content - Rendering all three components */}
+      <main style={styles.main}>
+        <div style={styles.componentWrapper}>
+          <h2 style={styles.sectionTitle}>📚 All Components</h2>
+          <p style={styles.sectionDesc}>
+            Below are three different components demonstrating different 
+            component types and their features.
+          </p>
+          
+          {/* Call Home Component */}
+          <Home />
+          
+          {/* Call About Component */}
+          <About />
+          
+          {/* Call Contact Component */}
+          <Contact />
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={styles.footer}>
+        <p>© 2026 Student Management Portal | React Components Lab</p>
+        <p style={styles.footerSub}>
+          Built with React - Demonstrating Class & Functional Components
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+// ============================================
+// STYLES (Inline Styles)
+// ============================================
+
+const styles = {
+  // Header Styles
+  header: {
+    backgroundColor: '#1a237e',
+    color: 'white',
+    padding: '30px 20px',
+    textAlign: 'center',
+    borderRadius: '12px 12px 0 0',
+    marginBottom: '0'
+  },
+  subtitle: {
+    color: '#90caf9',
+    fontSize: '16px',
+    marginTop: '5px'
+  },
+  badgeContainer: {
+    marginTop: '15px',
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '15px',
+    flexWrap: 'wrap'
+  },
+  badge: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    padding: '6px 16px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    color: '#e3f2fd',
+    border: '1px solid rgba(255,255,255,0.2)'
+  },
+  
+  // Main Content Styles
+  main: {
+    padding: '20px',
+    backgroundColor: '#f5f5f5'
+  },
+  componentWrapper: {
+    maxWidth: '900px',
+    margin: '0 auto'
+  },
+  sectionTitle: {
+    color: '#1a237e',
+    fontSize: '32px',
+    marginBottom: '10px'
+  },
+  sectionDesc: {
+    color: '#555',
+    fontSize: '16px',
+    marginBottom: '30px'
+  },
+  
+  // Component Common Styles
+  heading: {
+    fontSize: '28px',
+    marginBottom: '15px'
+  },
+  message: {
+    fontSize: '18px',
+    marginBottom: '10px'
+  },
+  componentType: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    marginTop: '10px',
+    padding: '8px',
+    borderRadius: '6px',
+    backgroundColor: 'rgba(0,0,0,0.05)'
+  },
+  componentInfo: {
+    fontSize: '14px',
+    color: '#666',
+    marginTop: '10px',
+    lineHeight: '1.8'
+  },
+  
+  // Home Component Specific Styles
+  homeContainer: {
+    padding: '25px',
+    margin: '20px 0',
+    backgroundColor: '#e3f2fd',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    borderLeft: '5px solid #0d47a1'
+  },
+  
+  // About Component Specific Styles
+  aboutContainer: {
+    padding: '25px',
+    margin: '20px 0',
+    backgroundColor: '#f3e5f5',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    borderLeft: '5px solid #6a1b9a'
+  },
+  
+  // Contact Component Specific Styles
+  contactContainer: {
+    padding: '25px',
+    margin: '20px 0',
+    backgroundColor: '#e8f5e9',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    borderLeft: '5px solid #1b5e20'
+  },
+  contactInfo: {
+    marginTop: '15px',
+    padding: '15px',
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: '8px',
+    textAlign: 'left',
+    lineHeight: '2'
+  },
+  
+  // Footer Styles
+  footer: {
+    backgroundColor: '#263238',
+    color: '#b0bec5',
+    padding: '25px',
+    textAlign: 'center',
+    borderRadius: '0 0 12px 12px',
+    marginTop: '0'
+  },
+  footerSub: {
+    fontSize: '14px',
+    color: '#78909c',
+    marginTop: '5px'
+  }
+};
+
+// ============================================
+// EXPORT THE APP COMPONENT
+// ============================================
+
+export default App;
