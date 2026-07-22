@@ -1,0 +1,309 @@
+/* ============================================
+   FILE: src/App.css
+   Complete Styling for Score Calculator App
+   ============================================ */
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.App {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 1300px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Header Styles */
+.app-header {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.app-header h1 {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.app-header p {
+  font-size: 18px;
+  color: #90caf9;
+  margin-bottom: 15px;
+}
+
+.header-badges {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  color: #e3f2fd;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Main Content Styles */
+.app-main {
+  padding: 30px;
+  background: #f5f7fa;
+}
+
+.section-title {
+  color: #1a237e;
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.section-desc {
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+  padding: 10px;
+}
+
+/* Score Card Styles */
+.score-card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-top: 5px solid #1a237e;
+  animation: slideUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+.score-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.score-card:nth-child(1) { animation-delay: 0.1s; }
+.score-card:nth-child(2) { animation-delay: 0.2s; }
+.score-card:nth-child(3) { animation-delay: 0.3s; }
+.score-card:nth-child(4) { animation-delay: 0.4s; }
+.score-card:nth-child(5) { animation-delay: 0.5s; }
+
+.score-title {
+  color: #1a237e;
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e8eaf6;
+  padding-bottom: 15px;
+}
+
+/* Student Information */
+.student-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.student-info h3 {
+  color: #1a237e;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.student-info p {
+  color: #333;
+  font-size: 15px;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.student-info p:last-child {
+  border-bottom: none;
+}
+
+.student-info strong {
+  color: #1a237e;
+  display: inline-block;
+  min-width: 90px;
+}
+
+/* Score Result */
+.score-result {
+  background: #f3f4f6;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.score-result h3 {
+  color: #1a237e;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.average-display,
+.performance-display {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.average-display:last-child,
+.performance-display:last-child {
+  border-bottom: none;
+}
+
+.average-label,
+.performance-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.average-value,
+.performance-value {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s ease-in-out;
+  animation: progressAnimation 1.5s ease-in-out;
+}
+
+@keyframes progressAnimation {
+  from {
+    width: 0;
+  }
+}
+
+/* Footer Styles */
+.app-footer {
+  background: #263238;
+  color: #b0bec5;
+  padding: 25px;
+  text-align: center;
+}
+
+.app-footer p {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.footer-sub {
+  font-size: 14px;
+  color: #78909c;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .students-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 30px 20px;
+  }
+
+  .app-header h1 {
+    font-size: 28px;
+  }
+
+  .app-main {
+    padding: 20px;
+  }
+
+  .students-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .score-card {
+    padding: 20px;
+  }
+
+  .average-display,
+  .performance-display {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  .app-header h1 {
+    font-size: 24px;
+  }
+
+  .app-header p {
+    font-size: 14px;
+  }
+
+  .badge {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .score-title {
+    font-size: 20px;
+  }
+}
