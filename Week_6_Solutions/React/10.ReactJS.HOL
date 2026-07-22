@@ -1,0 +1,331 @@
+/* ============================================
+   FILE: src/App.css
+   CSS Styles for Office Space Rental App
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.App {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* ============================================
+   MAIN CONTENT STYLES
+   ============================================ */
+.main-content {
+  padding: 30px;
+  background: #f8f9fa;
+}
+
+/* ============================================
+   SECTION TITLES
+   ============================================ */
+.section-title {
+  color: #1a237e;
+  font-size: 26px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #e8eaf6;
+}
+
+/* ============================================
+   FEATURED SECTION
+   ============================================ */
+.featured-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.featured-card {
+  display: flex;
+  gap: 25px;
+  background: #f5f7fa;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 20px;
+  border: 2px solid #e8eaf6;
+}
+
+.featured-image {
+  width: 45%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.featured-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured-details h3 {
+  font-size: 28px;
+  color: #1a237e;
+  margin-bottom: 10px;
+}
+
+.featured-details .rent {
+  font-size: 24px !important;
+  margin: 10px 0;
+}
+
+.featured-details p {
+  color: #555;
+  font-size: 16px;
+  margin: 5px 0;
+}
+
+/* ============================================
+   ALL SPACES GRID
+   ============================================ */
+.all-spaces {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.spaces-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+/* ============================================
+   SPACE CARD STYLES
+   ============================================ */
+.space-card {
+  background: #f5f7fa;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.space-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.space-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.space-info {
+  padding: 18px;
+}
+
+.space-info h3 {
+  color: #1a237e;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.space-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.space-address {
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* ============================================
+   JSX FEATURES SECTION
+   ============================================ */
+.jsx-features {
+  margin-top: 30px;
+  padding: 25px;
+  background: #e8eaf6;
+  border-radius: 12px;
+  border-left: 5px solid #1a237e;
+}
+
+.jsx-features h3 {
+  color: #1a237e;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.feature-item .icon {
+  font-size: 16px;
+}
+
+/* ============================================
+   ECMA SCRIPT FEATURES SECTION
+   ============================================ */
+.ecma-features {
+  margin-top: 20px;
+  padding: 25px;
+  background: #f3e5f5;
+  border-radius: 12px;
+  border-left: 5px solid #6a1b9a;
+}
+
+.ecma-features h3 {
+  color: #6a1b9a;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.ecma-features ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.ecma-features li {
+  padding: 8px 15px;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.ecma-features li strong {
+  color: #6a1b9a;
+}
+
+/* ============================================
+   FOOTER STYLES
+   ============================================ */
+.app-footer {
+  background: #263238;
+  color: #b0bec5;
+  padding: 25px;
+  text-align: center;
+}
+
+.app-footer p {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.footer-sub {
+  font-size: 14px;
+  color: #78909c;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 1024px) {
+  .featured-card {
+    flex-direction: column;
+  }
+
+  .featured-image {
+    width: 100%;
+    height: 200px;
+  }
+
+  .spaces-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .main-content {
+    padding: 15px;
+  }
+
+  .featured-section {
+    padding: 15px;
+  }
+
+  .featured-details h3 {
+    font-size: 22px;
+  }
+
+  .spaces-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ecma-features ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .featured-details h3 {
+    font-size: 18px;
+  }
+
+  .featured-details .rent {
+    font-size: 20px !important;
+  }
+
+  .space-info h3 {
+    font-size: 17px;
+  }
+
+  .jsx-features {
+    padding: 15px;
+  }
+
+  .ecma-features {
+    padding: 15px;
+  }
+}
