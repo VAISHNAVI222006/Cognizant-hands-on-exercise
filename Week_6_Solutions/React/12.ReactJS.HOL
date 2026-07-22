@@ -1,0 +1,445 @@
+// ============================================
+// COMPLETE SINGLE FILE: App.js
+// Ticket Booking App - Conditional Rendering Demo
+// ============================================
+
+import React, { Component } from 'react';
+import './App.css';
+
+// ============================================
+// FLIGHT DATA - Flight details to display
+// ============================================
+
+const flightData = [
+  {
+    id: 1,
+    airline: 'Emirates',
+    flightNumber: 'EK 503',
+    from: 'New York (JFK)',
+    to: 'Dubai (DXB)',
+    departure: '10:30 AM',
+    arrival: '07:45 AM (+1)',
+    price: '$850',
+    seats: 24,
+    image: '✈️'
+  },
+  {
+    id: 2,
+    airline: 'Singapore Airlines',
+    flightNumber: 'SQ 321',
+    from: 'London (LHR)',
+    to: 'Singapore (SIN)',
+    departure: '09:00 PM',
+    arrival: '05:30 PM (+1)',
+    price: '$720',
+    seats: 18,
+    image: '✈️'
+  },
+  {
+    id: 3,
+    airline: 'Delta Airlines',
+    flightNumber: 'DL 124',
+    from: 'Los Angeles (LAX)',
+    to: 'Tokyo (NRT)',
+    departure: '11:15 AM',
+    arrival: '03:45 PM (+1)',
+    price: '$680',
+    seats: 32,
+    image: '✈️'
+  },
+  {
+    id: 4,
+    airline: 'British Airways',
+    flightNumber: 'BA 102',
+    from: 'Chicago (ORD)',
+    to: 'London (LHR)',
+    departure: '06:30 PM',
+    arrival: '08:15 AM (+1)',
+    price: '$590',
+    seats: 15,
+    image: '✈️'
+  },
+  {
+    id: 5,
+    airline: 'Qatar Airways',
+    flightNumber: 'QR 705',
+    from: 'Miami (MIA)',
+    to: 'Doha (DOH)',
+    departure: '08:45 PM',
+    arrival: '06:30 PM (+1)',
+    price: '$780',
+    seats: 20,
+    image: '✈️'
+  },
+  {
+    id: 6,
+    airline: 'United Airlines',
+    flightNumber: 'UA 856',
+    from: 'San Francisco (SFO)',
+    to: 'Sydney (SYD)',
+    departure: '11:00 PM',
+    arrival: '09:15 AM (+2)',
+    price: '$920',
+    seats: 28,
+    image: '✈️'
+  }
+];
+
+// ============================================
+// COMPONENT 1: Guest View
+// Displays flight details for guest users (browse only)
+// ============================================
+
+class GuestView extends Component {
+  render() {
+    return (
+      <div className="view-container">
+        <div className="view-header">
+          <h2>🔍 Browse Available Flights</h2>
+          <p className="view-subtitle">
+            Please login to book tickets. You are browsing as a Guest.
+          </p>
+        </div>
+
+        {/* Display flight details */}
+        <div className="flights-grid">
+          {flightData.map(flight => (
+            <div key={flight.id} className="flight-card guest-card">
+              <div className="flight-icon">{flight.image}</div>
+              <h3 className="airline-name">{flight.airline}</h3>
+              <div className="flight-number">{flight.flightNumber}</div>
+              <div className="flight-route">
+                <div className="route-detail">
+                  <span className="label">From:</span>
+                  <span className="value">{flight.from}</span>
+                </div>
+                <div className="route-detail">
+                  <span className="label">To:</span>
+                  <span className="value">{flight.to}</span>
+                </div>
+              </div>
+              <div className="flight-time">
+                <div className="time-detail">
+                  <span className="label">Departure:</span>
+                  <span className="value">{flight.departure}</span>
+                </div>
+                <div className="time-detail">
+                  <span className="label">Arrival:</span>
+                  <span className="value">{flight.arrival}</span>
+                </div>
+              </div>
+              <div className="flight-price-seats">
+                <span className="price">{flight.price}</span>
+                <span className="seats">🪑 {flight.seats} seats</span>
+              </div>
+              {/* Guest can only view, cannot book */}
+              <button className="btn-guest" disabled>
+                🔒 Login to Book
+              </button>
+              <div className="guest-badge">👤 Guest View Only</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Guest info message */}
+        <div className="info-banner guest-banner">
+          <p>💡 <strong>Guest Mode:</strong> You can browse all available flights. </p>
+          <p>Click <strong>"Login"</strong> to book your tickets.</p>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 2: User View
+// Displays flight details for logged-in users (can book)
+// ============================================
+
+class UserView extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      bookedFlights: []
+    };
+  }
+
+  // Handle booking flight
+  handleBookFlight = (flightId) => {
+    const flight = flightData.find(f => f.id === flightId);
+    
+    // Check if already booked
+    if (this.state.bookedFlights.includes(flightId)) {
+      alert(`⚠️ You have already booked ${flight.airline} flight ${flight.flightNumber}`);
+      return;
+    }
+
+    // Check if seats are available
+    if (flight.seats <= 0) {
+      alert('❌ Sorry, no seats available on this flight!');
+      return;
+    }
+
+    // Book the flight
+    this.setState(prevState => ({
+      bookedFlights: [...prevState.bookedFlights, flightId]
+    }));
+
+    alert(`✅ Successfully booked ${flight.airline} flight ${flight.flightNumber}!`);
+  }
+
+  render() {
+    const { bookedFlights } = this.state;
+
+    return (
+      <div className="view-container">
+        <div className="view-header user-header">
+          <h2>🎫 Book Your Flight</h2>
+          <p className="view-subtitle">
+            Welcome back! You are logged in and can book tickets.
+          </p>
+          <div className="booking-stats">
+            <span>📋 Booked: {bookedFlights.length} flights</span>
+          </div>
+        </div>
+
+        {/* Display flight details with book button */}
+        <div className="flights-grid">
+          {flightData.map(flight => {
+            const isBooked = bookedFlights.includes(flight.id);
+            return (
+              <div key={flight.id} className={`flight-card user-card ${isBooked ? 'booked' : ''}`}>
+                <div className="flight-icon">{flight.image}</div>
+                <h3 className="airline-name">{flight.airline}</h3>
+                <div className="flight-number">{flight.flightNumber}</div>
+                <div className="flight-route">
+                  <div className="route-detail">
+                    <span className="label">From:</span>
+                    <span className="value">{flight.from}</span>
+                  </div>
+                  <div className="route-detail">
+                    <span className="label">To:</span>
+                    <span className="value">{flight.to}</span>
+                  </div>
+                </div>
+                <div className="flight-time">
+                  <div className="time-detail">
+                    <span className="label">Departure:</span>
+                    <span className="value">{flight.departure}</span>
+                  </div>
+                  <div className="time-detail">
+                    <span className="label">Arrival:</span>
+                    <span className="value">{flight.arrival}</span>
+                  </div>
+                </div>
+                <div className="flight-price-seats">
+                  <span className="price">{flight.price}</span>
+                  <span className="seats">🪑 {flight.seats} seats</span>
+                </div>
+                {/* User can book tickets */}
+                <button 
+                  className={`btn-book ${isBooked ? 'booked-btn' : ''}`}
+                  onClick={() => this.handleBookFlight(flight.id)}
+                  disabled={isBooked}
+                >
+                  {isBooked ? '✅ Booked' : '🎟️ Book Now'}
+                </button>
+                {isBooked && (
+                  <div className="booked-badge">✓ Booked</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* User info message */}
+        <div className="info-banner user-banner">
+          <p>💡 <strong>User Mode:</strong> You can book any available flight. </p>
+          <p>Click <strong>"Book Now"</strong> to confirm your ticket.</p>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// COMPONENT 3: Login/Logout Component
+// Demonstrates conditional rendering with state
+// ============================================
+
+class LoginLogout extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoggedIn: false,
+      username: '',
+      showLoginForm: false
+    };
+  }
+
+  // Handle login
+  handleLogin = () => {
+    const username = prompt('Enter your username:');
+    if (username && username.trim() !== '') {
+      this.setState({
+        isLoggedIn: true,
+        username: username.trim(),
+        showLoginForm: false
+      });
+      alert(`👋 Welcome ${username.trim()}!`);
+    }
+  }
+
+  // Handle logout
+  handleLogout = () => {
+    this.setState({
+      isLoggedIn: false,
+      username: ''
+    });
+    alert('👋 Logged out successfully!');
+  }
+
+  render() {
+    const { isLoggedIn, username } = this.state;
+
+    return (
+      <div className="auth-container">
+        <div className="auth-status">
+          <span className="status-icon">
+            {isLoggedIn ? '🟢' : '🔴'}
+          </span>
+          <span className="status-text">
+            {isLoggedIn ? `Logged in as: ${username}` : 'Not Logged In'}
+          </span>
+        </div>
+        <div className="auth-buttons">
+          {/* Conditional rendering: Show Login or Logout button */}
+          {!isLoggedIn ? (
+            <button className="btn-login" onClick={this.handleLogin}>
+              🔑 Login
+            </button>
+          ) : (
+            <button className="btn-logout" onClick={this.handleLogout}>
+              🚪 Logout
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ============================================
+// MAIN APP COMPONENT
+// Demonstrates: Conditional rendering, element variables, preventing render
+// ============================================
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoggedIn: false,
+      username: '',
+      showGuestView: true,
+      showUserView: false
+    };
+  }
+
+  // Handle login from child component
+  handleLogin = (username) => {
+    this.setState({
+      isLoggedIn: true,
+      username: username,
+      showGuestView: false,
+      showUserView: true
+    });
+  }
+
+  // Handle logout from child component
+  handleLogout = () => {
+    this.setState({
+      isLoggedIn: false,
+      username: '',
+      showGuestView: true,
+      showUserView: false
+    });
+  }
+
+  render() {
+    const { isLoggedIn, username, showGuestView, showUserView } = this.state;
+
+    // ============================================
+    // 1. ELEMENT VARIABLES
+    // Storing JSX in variables for conditional rendering
+    // ============================================
+    
+    // Element variable for header message
+    const headerMessage = isLoggedIn 
+      ? <span className="welcome-message">👋 Welcome back, {username}!</span>
+      : <span className="guest-message">👤 Welcome, Guest!</span>;
+
+    // Element variable for content
+    let content;
+    if (isLoggedIn) {
+      content = <UserView />;
+    } else {
+      content = <GuestView />;
+    }
+
+    // ============================================
+    // 2. PREVENT COMPONENT FROM RENDERING
+    // If no flights available, return null to prevent rendering
+    // ============================================
+    
+    // Check if flights data exists
+    if (!flightData || flightData.length === 0) {
+      return null; // Prevents component from rendering
+    }
+
+    return (
+      <div className="App">
+        {/* Header */}
+        <header className="app-header">
+          <div className="header-top">
+            <h1>🎫 Flight Ticket Booking</h1>
+            {/* Element variable used here */}
+            {headerMessage}
+          </div>
+          <p className="header-subtitle">
+            {isLoggedIn 
+              ? 'Book your tickets now!' 
+              : 'Login to book your tickets!'}
+          </p>
+          
+          {/* Login/Logout Component */}
+          <LoginLogout 
+            onLogin={this.handleLogin}
+            onLogout={this.handleLogout}
+            isLoggedIn={isLoggedIn}
+            username={username}
+          />
+        </header>
+
+        {/* Main Content - Conditional Rendering */}
+        <main className="app-main">
+          {content}
+        </main>
+
+        {/* Footer */}
+        <footer className="app-footer">
+          <div className="footer-content">
+            <p>© 2026 Ticket Booking App | Conditional Rendering Demo</p>
+            <div className="footer-features">
+              <span>✓ Element Variables</span>
+              <span>✓ Conditional Rendering</span>
+              <span>✓ Prevent Rendering</span>
+              <span>✓ Login/Logout</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+}
+
+export default App;
